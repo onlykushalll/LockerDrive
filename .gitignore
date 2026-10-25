@@ -1,0 +1,27 @@
+﻿# Byte-compiled / cache / test artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+*.egg-info/
+*.log
+*.tmp
+
+# Compiled Executables & PyInstaller build directories (kept locally in dist/)
+build/
+dist/
+archive/
+
+# ONNX Model Weights (>100MB; downloaded via FaceRecog-Engine/download_models.py)
+FaceRecog-Engine/models/**/*.onnx
+FaceRecog-Engine/models/**/*.zip
+!FaceRecog-Engine/models/.gitkeep
+
+# Local runtime state & vault secrets (never commit user secrets/scores)
+settings.json
+stats.json
+*.vhdx
+*.secret
+*.pkl
+*.dpapi
+RECOVERY_KEY*.txt

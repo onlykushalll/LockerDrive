@@ -1,0 +1,13 @@
+# Real runtime dependencies of the LockerDrive v3.0 app
+# Exact pins recorded from the deployment machine's pip freeze
+# (pythoncore-3.14-64).
+pywebview==6.2.1
+argon2-cffi==25.1.0
+pywin32==311
+opencv-python==4.13.0.92
+numpy==2.4.4
+onnxruntime==1.26.0
+insightface==0.7.3
+pillow==12.2.0
+customtkinter==5.2.2
+pygame-ce==2.5.7

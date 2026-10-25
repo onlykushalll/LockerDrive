@@ -1,0 +1,3041 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="daylight">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LockerDrive</title>
+<style>
+  /* ============================================================
+     LockerDrive v6.0 — Apple macOS Sequoia & iOS 18 HIG Design
+     Architectural materials, 1px specular borders, full-width
+     inset-grouped settings, autonomous ThinkingOrb, and live
+     TrueDepth camera + 3D biometric mesh.
+     ============================================================ */
+  :root {
+    --accent: #0071E3;
+    --accent-deep: #005BB5;
+    --accent-ink: #0066CC;
+    --accent-soft: rgba(0, 113, 227, 0.10);
+    --accent-glow: rgba(0, 113, 227, 0.22);
+    --pastel-lavender: #D1D1D6;
+    --success: #28CD41;
+    --success-soft: rgba(40, 205, 65, 0.12);
+    --warning: #FF9F0A;
+    --danger: #FF3B30;
+    --bg-canvas: #F5F5F7;
+    --bg-grad-1: #FFFFFF;
+    --bg-grad-2: #F5F5F7;
+    --bg-grad-3: #EAEAEF;
+    --text: #1D1D1F;
+    --text-dim: #6E6E73;
+    --text-faint: #86868B;
+    --ink-line: rgba(0, 0, 0, 0.08);
+    --glass-card-bg: rgba(255, 255, 255, 0.88);
+    --glass-btn-bg: rgba(255, 255, 255, 0.85);
+    --glass-input-bg: rgba(118, 118, 128, 0.10);
+    --group-bg: rgba(255, 255, 255, 0.72);
+    --stroke: rgba(0, 0, 0, 0.08);
+    --stroke-strong: rgba(255, 255, 255, 0.95);
+    --shadow-card: 0 20px 55px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+    --r-lg: 22px; --r-md: 14px; --r-sm: 10px;
+    --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  html[data-theme="twilight"] {
+    --accent: #0A84FF;
+    --accent-deep: #0070E0;
+    --accent-ink: #409CFF;
+    --accent-soft: rgba(10, 132, 255, 0.16);
+    --accent-glow: rgba(10, 132, 255, 0.30);
+    --pastel-lavender: #3A3A3C;
+    --success: #30D158;
+    --success-soft: rgba(48, 209, 88, 0.16);
+    --warning: #FF9F0A;
+    --danger: #FF453A;
+    --bg-canvas: #000000;
+    --bg-grad-1: #0C0C0E;
+    --bg-grad-2: #141417;
+    --bg-grad-3: #09090B;
+    --text: #F5F5F7;
+    --text-dim: #98989D;
+    --text-faint: #636366;
+    --ink-line: rgba(255, 255, 255, 0.10);
+    --glass-card-bg: rgba(28, 28, 30, 0.90);
+    --glass-btn-bg: rgba(44, 44, 46, 0.85);
+    --glass-input-bg: rgba(118, 118, 128, 0.24);
+    --group-bg: rgba(38, 38, 40, 0.75);
+    --stroke: rgba(255, 255, 255, 0.12);
+    --stroke-strong: rgba(255, 255, 255, 0.16);
+    --shadow-card: 0 24px 68px rgba(0, 0, 0, 0.65), 0 1px 6px rgba(0, 0, 0, 0.45);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%; height: 100%; overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+    color: var(--text);
+    background: var(--bg-canvas);
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+    transition: background 0.3s ease, color 0.2s ease;
+  }
+
+  .mono, #status-detail, #recovery-code-display, #access-log-display {
+    font-family: 'SF Mono', 'Cascadia Mono', ui-monospace, Consolas, monospace;
+    user-select: text;
+  }
+
+  /* ---------- Top Theme Toggle Pill ---------- */
+  #theme-toggle-btn {
+    position: fixed; top: 12px; right: 14px; z-index: 900;
+    width: 32px; height: 32px; padding: 0; border-radius: 50%;
+    background: var(--glass-btn-bg);
+    border: 1px solid var(--stroke);
+    color: var(--text-dim);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    backdrop-filter: blur(12px);
+  }
+  #theme-toggle-btn:hover { color: var(--text); transform: scale(1.04); }
+
+  /* ---------- Subtle Architectural Backdrop ---------- */
+  #backdrop {
+    position: fixed; inset: 0; z-index: 0; overflow: hidden;
+    background: radial-gradient(120% 80% at 50% 0%, var(--bg-grad-1) 0%, var(--bg-grad-2) 55%, var(--bg-grad-3) 100%);
+  }
+
+  #app { position: relative; z-index: 1; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+  .view {
+    display: flex; align-items: center; justify-content: center;
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    opacity: 1; pointer-events: auto; visibility: visible;
+    transition: opacity 0.28s ease;
+  }
+  .view.hidden {
+    display: flex !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0s linear 0.25s;
+  }
+  .hidden { display: none !important; }
+
+  /* ---------- Apple Glass Card ---------- */
+  .glass-card {
+    position: relative; overflow: hidden;
+    background: var(--glass-card-bg);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid var(--stroke);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-card), inset 0 1px 0 var(--stroke-strong);
+    transition: transform 0.35s var(--ease-spring), opacity 0.28s ease;
+  }
+  .view.hidden .glass-card { transform: translateY(10px) scale(0.985); opacity: 0; }
+
+  .ic { width: 1em; height: 1em; display: inline-block; vertical-align: -0.14em; flex: none; }
+  .ic svg { width: 100%; height: 100%; display: block; }
+  .icon-tile {
+    width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    background: var(--accent-soft);
+    border: 1px solid rgba(0, 113, 227, 0.20);
+    color: var(--accent); font-size: 20px;
+  }
+
+  .wordmark-badge {
+    font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--text-dim); background: rgba(118, 118, 128, 0.10);
+    border: 1px solid var(--stroke); padding: 4px 11px; border-radius: 99px;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .wordmark-badge .ic { font-size: 12px; color: var(--accent); }
+
+  /* ---------- Inputs & Selects ---------- */
+  .input-wrap { position: relative; width: 100%; display: flex; align-items: center; }
+  input[type="password"], input[type="text"], input[type="number"], select {
+    background: var(--glass-input-bg);
+    border: 1px solid var(--stroke);
+    border-radius: 10px; padding: 10px 12px;
+    color: var(--text); font-size: 13.5px;
+    font-family: 'SF Mono', 'Cascadia Mono', monospace;
+    letter-spacing: 0.12em; text-align: center;
+    outline: none; width: 100%;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  }
+  select {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    letter-spacing: 0; font-size: 12.5px; font-weight: 500; text-align: left;
+    padding: 7px 10px; cursor: pointer;
+    background: var(--glass-btn-bg);
+  }
+  html[data-theme="twilight"] select option { background: #1C1C1E; color: #F5F5F7; }
+  input:disabled { opacity: 0.5; cursor: not-allowed; }
+  input::placeholder { color: var(--text-faint); letter-spacing: 0.01em; font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 12.5px; }
+  input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+  .pin-len-pill {
+    position: absolute; right: 9px; font-size: 10px; font-weight: 600;
+    color: var(--text-faint); font-family: 'SF Mono', monospace;
+    background: rgba(118, 118, 128, 0.12); padding: 2px 6px; border-radius: 6px;
+    pointer-events: none;
+  }
+  .pin-len-pill.valid { color: var(--success); background: var(--success-soft); }
+
+  .pin-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; width: 100%; margin-top: 2px; }
+  .keypad-btn {
+    padding: 7px 0; border-radius: 9px; font-size: 13.5px; font-weight: 600;
+    font-family: 'SF Mono', monospace;
+    background: var(--glass-btn-bg); border: 1px solid var(--stroke); color: var(--text);
+  }
+  .keypad-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  @keyframes shakeX {
+    10%, 90% { transform: translateX(-2px); } 20%, 80% { transform: translateX(3px); }
+    30%, 50%, 70% { transform: translateX(-4px); } 40%, 60% { transform: translateX(4px); }
+  }
+  .input-error { animation: shakeX 0.4s ease; border-color: var(--danger) !important; }
+
+  /* ---------- Buttons ---------- */
+  button {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13px; font-weight: 600;
+    border: none; border-radius: 10px; padding: 9.5px 16px; cursor: pointer;
+    transition: transform 0.12s ease, background 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  }
+  button:active { transform: scale(0.98); }
+  button:disabled { opacity: 0.5; pointer-events: none; }
+  .btn-primary {
+    background: var(--accent); color: #FFFFFF;
+    box-shadow: 0 2px 8px var(--accent-glow);
+  }
+  .btn-primary:hover { background: var(--accent-deep); }
+  .btn-glass {
+    background: var(--glass-btn-bg); color: var(--text);
+    border: 1px solid var(--stroke);
+  }
+  .btn-glass:hover { border-color: var(--text-faint); }
+  .btn-danger {
+    background: rgba(255, 59, 48, 0.10); color: var(--danger);
+    border: 1px solid rgba(255, 59, 48, 0.28);
+  }
+  .btn-danger:hover { background: rgba(255, 59, 48, 0.18); }
+  .link-btn {
+    background: none; color: var(--accent); font-size: 12px; font-weight: 500;
+    padding: 4px 8px; border-radius: 7px;
+  }
+  .link-btn:hover { background: var(--accent-soft); }
+  .btn-block { width: 100%; }
+  .btn-sm { padding: 6px 11px; font-size: 11.5px; border-radius: 8px; }
+
+  /* ---------- Apple iOS Toggle Switch ---------- */
+  .ios-switch {
+    position: relative; width: 42px; height: 24px; flex: none;
+    background: rgba(120, 120, 128, 0.28); border-radius: 99px;
+    cursor: pointer; transition: background 0.22s ease; border: none; padding: 2px;
+  }
+  .ios-switch.on { background: var(--success); }
+  .ios-switch-thumb {
+    width: 20px; height: 20px; border-radius: 50%; background: #FFFFFF;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+    transition: transform 0.22s var(--ease-spring);
+    pointer-events: none;
+  }
+  .ios-switch.on .ios-switch-thumb { transform: translateX(18px); }
+
+  /* ---------- Recovery Banner ---------- */
+  #recovery-key-warning {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    display: flex; align-items: flex-start; gap: 8px;
+    background: rgba(255, 59, 48, 0.95); color: #FFFFFF;
+    font-size: 11px; line-height: 1.45; padding: 8px 14px;
+  }
+
+  /* ---------- Compact & Locked Cards ---------- */
+  .card-compact { width: 400px; padding: 26px 26px 24px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+  .card-compact p { font-size: 12.5px; color: var(--text-dim); line-height: 1.5; }
+  .card-locked { width: 400px; padding: 26px 26px 22px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+
+  #scan-ring-container {
+    position: relative; width: 172px; height: 172px; margin: 2px 0;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+  }
+  #scan-camera-preview {
+    position: absolute; inset: 22px; width: 128px; height: 128px;
+    border-radius: 50%; object-fit: cover; opacity: 0;
+    transition: opacity 0.25s ease; z-index: 1; pointer-events: none;
+  }
+  #scan-orb { width: 172px; height: 172px; display: block; position: relative; z-index: 2; }
+  #scan-ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); pointer-events: none; z-index: 3; opacity: 0.45; }
+  #scan-glyph { position: absolute; width: 20px; height: 20px; opacity: 0; pointer-events: none; }
+
+  #status-text-locked { font-size: 16.5px; font-weight: 600; text-align: center; min-height: 22px; color: var(--text); }
+  #status-detail { font-size: 11.5px; color: var(--text-dim); text-align: center; min-height: 16px; }
+
+  #lockout-banner {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 99px;
+    background: rgba(255, 59, 48, 0.12); border: 1px solid rgba(255, 59, 48, 0.30);
+    color: var(--danger); font-size: 11.5px; font-weight: 600; font-family: 'SF Mono', monospace;
+  }
+
+  .scan-hud-pills { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; min-height: 20px; }
+  .hud-pill {
+    font-size: 10px; font-weight: 600; padding: 2.5px 9px; border-radius: 99px;
+    background: var(--glass-input-bg); border: 1px solid var(--stroke);
+    color: var(--text-dim); font-family: 'SF Mono', monospace;
+  }
+  .hud-pill.good { color: var(--success); background: var(--success-soft); border-color: rgba(40, 205, 65, 0.30); }
+  .hud-pill.warn { color: var(--warning); background: rgba(255, 159, 10, 0.14); border-color: rgba(255, 159, 10, 0.30); }
+
+  #pin-fallback { display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: 2px; }
+  #recovery-input-section { display: flex; flex-direction: column; gap: 8px; }
+
+  /* ---------- Apple Face ID Live TrueDepth Studio ---------- */
+  .card-enroll { width: 400px; padding: 24px 26px 22px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 11px; }
+  .enroll-dial-wrap {
+    position: relative; width: 196px; height: 196px;
+    perspective: 720px; display: flex; align-items: center; justify-content: center;
+  }
+  .enroll-dial-3d { position: absolute; inset: 0; width: 100%; height: 100%; transform-style: preserve-3d; will-change: transform; }
+  .enroll-svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
+  .dial-tick { stroke: var(--ink-line); stroke-width: 2.4; stroke-linecap: round; transition: stroke 0.15s ease, stroke-width 0.15s ease; }
+  .dial-tick.active-zone { stroke: var(--accent); stroke-width: 3.0; }
+  .dial-tick.lit { stroke: var(--success); stroke-width: 3.4; filter: drop-shadow(0 0 3px rgba(40, 205, 65, 0.45)); }
+  .enroll-inner-reticle {
+    position: relative; width: 138px; height: 138px; border-radius: 50%;
+    background: #0B0B0E; border: 1.5px solid rgba(255, 255, 255, 0.22);
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.65);
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+  }
+  #enroll-camera-preview {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; border-radius: 50%; opacity: 0; transition: opacity 0.2s ease;
+  }
+  #enroll-camera-preview.visible { opacity: 0.92; }
+  #enroll-mesh-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+  .enroll-crosshair { position: absolute; inset: 14px; border-radius: 50%; border: 1px dashed rgba(255, 255, 255, 0.18); pointer-events: none; z-index: 2; }
+  .enroll-face-cursor {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(0, 113, 227, 0.28); border: 1.5px solid var(--accent);
+    display: flex; align-items: center; justify-content: center; color: #FFFFFF; z-index: 3;
+  }
+  .enroll-check-bloom {
+    position: absolute; inset: 10px; border-radius: 50%;
+    background: var(--success); color: #FFFFFF;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transform: scale(0.4); pointer-events: none; z-index: 4;
+    transition: opacity 0.25s ease, transform 0.32s var(--ease-spring);
+  }
+  .enroll-check-bloom.visible { opacity: 1; transform: scale(1); }
+  .enroll-coaching-pill {
+    padding: 6px 14px; border-radius: 99px;
+    background: var(--glass-input-bg); border: 1px solid var(--stroke);
+    font-size: 12.5px; font-weight: 600; color: var(--text); min-height: 30px;
+    display: inline-flex; align-items: center;
+  }
+  .enroll-pose-buckets { display: flex; gap: 5px; width: 100%; }
+  .pose-chip {
+    flex: 1; padding: 5px 2px; font-size: 9.5px; font-weight: 600; border-radius: 8px;
+    background: var(--glass-input-bg); color: var(--text-dim); border: 1px solid var(--stroke);
+    text-transform: uppercase; display: flex; flex-direction: column; align-items: center; gap: 1px;
+  }
+  .pose-chip.target { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+  .pose-chip.captured { background: var(--success-soft); color: var(--success); border-color: var(--success); }
+  .enroll-progress-bar-wrap { width: 100%; height: 4px; background: var(--ink-line); border-radius: 2px; overflow: hidden; }
+  .enroll-progress-bar-fill { height: 100%; width: 0%; background: var(--success); transition: width 0.15s ease; }
+
+  /* ---------- Full-Width Apple macOS Sequoia Dashboard ---------- */
+  .card-dashboard {
+    width: 432px; height: min(668px, calc(100% - 16px));
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .top-header-bar {
+    padding: 14px 18px 10px;
+    border-bottom: 1px solid var(--stroke);
+    background: var(--group-bg);
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .top-brand-row { display: flex; align-items: center; justify-content: space-between; }
+  .brand-left { display: flex; align-items: center; gap: 9px; }
+  .brand-tile {
+    width: 28px; height: 28px; border-radius: 8px;
+    background: var(--accent); color: #FFFFFF;
+    display: flex; align-items: center; justify-content: center; font-size: 14px;
+  }
+  .brand-name { font-size: 13.5px; font-weight: 700; color: var(--text); }
+  .brand-sub { font-size: 10px; color: var(--text-faint); font-weight: 500; }
+  .status-pill-right {
+    display: flex; align-items: center; gap: 6px;
+    padding: 3px 9px; border-radius: 99px;
+    background: var(--success-soft); border: 1px solid rgba(40, 205, 65, 0.28);
+    font-size: 10.5px; font-weight: 600; color: var(--success);
+  }
+  #session-uptime-badge { font-family: 'SF Mono', monospace; font-size: 10px; color: var(--text-dim); }
+  #session-uptime-badge.warn { color: var(--warning); font-weight: 700; }
+
+  /* Segmented Control Navigation */
+  .segmented-nav {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3px;
+    background: var(--glass-input-bg); padding: 3px; border-radius: 10px;
+    border: 1px solid var(--stroke);
+  }
+  .nav-item {
+    padding: 6px 10px; border-radius: 7px; font-size: 12px; font-weight: 600;
+    color: var(--text-dim); background: transparent; border: none;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .nav-item.active {
+    background: var(--glass-btn-bg); color: var(--text);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  }
+
+  .main-panel { flex: 1; padding: 16px 18px 18px; overflow-y: auto; }
+  .main-panel::-webkit-scrollbar { width: 5px; }
+  .main-panel::-webkit-scrollbar-thumb { background: var(--ink-line); border-radius: 6px; }
+
+  .panel { display: none; flex-direction: column; gap: 12px; }
+  .panel.active { display: flex; min-height: 100%; }
+  .panel h2 { font-size: 17px; font-weight: 700; color: var(--text); }
+  .panel p { font-size: 12px; color: var(--text-dim); line-height: 1.45; }
+
+  /* Apple Inset-Grouped Rows */
+  .apple-group {
+    background: var(--group-bg); border: 1px solid var(--stroke);
+    border-radius: 13px; overflow: hidden; display: flex; flex-direction: column;
+  }
+  .apple-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 10px 13px; border-bottom: 1px solid var(--ink-line);
+    text-align: left;
+  }
+  .apple-row:last-child { border-bottom: none; }
+  .apple-row-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+  .apple-row-title { font-size: 12.5px; font-weight: 600; color: var(--text); }
+  .apple-row-sub { font-size: 11px; color: var(--text-dim); line-height: 1.35; }
+
+  .metric-tiles { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .metric-tile {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    background: var(--group-bg); border: 1px solid var(--stroke);
+    border-radius: 12px; padding: 11px 6px;
+  }
+  .metric-val { font-size: 13px; font-weight: 700; color: var(--text); font-family: 'SF Mono', monospace; }
+  .metric-lbl { font-size: 9.5px; font-weight: 600; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.06em; }
+
+  .storage-card {
+    background: var(--group-bg); border: 1px solid var(--stroke);
+    border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 7px;
+  }
+  .storage-row { display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; font-weight: 600; color: var(--text-dim); }
+  .storage-bar-track { width: 100%; height: 6px; border-radius: 99px; background: var(--ink-line); overflow: hidden; }
+  .storage-bar-fill { height: 100%; width: 18%; border-radius: 99px; background: var(--accent); transition: width 0.3s ease; }
+
+  .cta-stack { display: flex; flex-direction: column; gap: 8px; margin-top: auto; padding-top: 6px; }
+  #lock-message { font-size: 11.5px; color: var(--warning); min-height: 15px; text-align: center; font-weight: 600; }
+
+  .section-label { font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint); margin-top: 2px; }
+  #settings-message, #generate-recovery-message, #change-pin-message, #drive-config-message {
+    font-size: 11.5px; color: var(--accent); min-height: 15px; font-weight: 500;
+  }
+
+  .btn-row-split { display: flex; gap: 7px; width: 100%; }
+  .btn-row-split > button { flex: 1; padding: 8px 10px; font-size: 12px; }
+
+  #access-log-display {
+    font-size: 10.5px; line-height: 1.55; white-space: pre-wrap; word-break: break-all;
+    max-height: 110px; overflow-y: auto;
+    background: var(--glass-input-bg); border: 1px solid var(--stroke);
+    border-radius: 10px; padding: 8px 10px; color: var(--text-dim);
+  }
+  #recovery-code-display {
+    font-size: 15.5px; text-align: center; padding: 12px; width: 100%;
+    background: var(--glass-input-bg); border: 1px solid var(--stroke);
+    border-radius: 10px; letter-spacing: 0.10em; color: var(--text);
+  }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .mini-chip { font-size: 10.5px; font-weight: 500; padding: 4px 10px; border-radius: 99px; background: var(--glass-input-bg); border: 1px solid var(--stroke); color: var(--text-dim); }
+
+  /* ================= LockerDrive v7.0 Motion-Graphics & Padlock Choreography ================= */
+  @keyframes cardSpringIn {
+    0% { opacity: 0; transform: translateY(14px) scale(0.96); filter: blur(6px); }
+    100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  }
+  .view:not(.hidden) .glass-card {
+    animation: cardSpringIn 0.48s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  /* Custom Gold Two-Tone Padlock Badge */
+  .padlock-hero-wrap {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .padlock-svg {
+    width: 22px; height: 22px; overflow: visible;
+    filter: drop-shadow(0 2px 6px rgba(245, 176, 22, 0.28));
+  }
+  .padlock-shackle {
+    transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform-origin: 17px 10px;
+  }
+  .padlock-unlocked .padlock-shackle {
+    transform: translateY(-4px) rotate(18deg);
+  }
+
+  /* Freestanding ThinkingOrb Stage (Ring moved to Twin Biometric Telemetry Bars) */
+  #scan-ring { opacity: 0 !important; width: 0 !important; height: 0 !important; }
+  #scan-ring-container {
+    width: 176px; height: 176px;
+    background: radial-gradient(circle, rgba(0, 113, 227, 0.07) 0%, transparent 70%);
+    transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  #scan-ring-container.unlock-burst {
+    transform: scale(1.12);
+    background: radial-gradient(circle, rgba(40, 205, 65, 0.22) 0%, transparent 72%);
+  }
+
+  /* Decoupled Twin Biometric Progress Bars */
+  .biometric-telemetry-bars {
+    width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    padding: 8px 12px; border-radius: 12px;
+    background: var(--group-bg); border: 1px solid var(--stroke);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+  }
+  .bio-meter { display: flex; flex-direction: column; gap: 4px; }
+  .bio-meter-top { display: flex; justify-content: space-between; font-size: 10px; font-weight: 600; color: var(--text-dim); }
+  .bio-meter-track { width: 100%; height: 5px; border-radius: 99px; background: var(--ink-line); overflow: hidden; }
+  .bio-meter-fill {
+    height: 100%; width: 0%; border-radius: 99px;
+    background: linear-gradient(90deg, #0071E3, #30D158);
+    transition: width 0.16s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* Instant Motion-Graphics Lock / Unlock Transition Overlay */
+  #motion-transition-overlay {
+    position: fixed; inset: 0; z-index: 2000;
+    background: rgba(12, 12, 16, 0.76);
+    backdrop-filter: blur(22px) saturate(180%);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.26s ease;
+  }
+  #motion-transition-overlay.active {
+    opacity: 1; pointer-events: auto;
+  }
+  .transition-card {
+    width: 340px; padding: 26px 24px; border-radius: 22px;
+    background: rgba(28, 28, 32, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+    color: #F5F5F7; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    transform: scale(0.92);
+    transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  #motion-transition-overlay.active .transition-card { transform: scale(1); }
+  .transition-padlock-lg { width: 64px; height: 64px; overflow: visible; }
+  .transition-steps {
+    width: 100%; display: flex; flex-direction: column; gap: 6px;
+    text-align: left; font-size: 11.5px; color: #98989D;
+    background: rgba(255, 255, 255, 0.05); padding: 10px 12px; border-radius: 12px;
+  }
+  .t-step { display: flex; align-items: center; gap: 8px; transition: color 0.2s ease; }
+  .t-step.done { color: #30D158; font-weight: 600; }
+  .t-step.active { color: #FFFFFF; font-weight: 600; }
+
+  /* Quick Action Grid on Unlocked Dashboard */
+  .quick-actions-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%;
+  }
+  .quick-action-tile {
+    padding: 10px 12px; border-radius: 12px;
+    background: var(--group-bg); border: 1px solid var(--stroke);
+    display: flex; align-items: center; gap: 9px;
+    font-size: 12px; font-weight: 600; color: var(--text);
+    cursor: pointer; transition: transform 0.14s ease, border-color 0.18s ease;
+  }
+  .quick-action-tile:hover { transform: translateY(-1px); border-color: var(--accent); }
+
+
+  /* ================= v8.0 Precision Layout & Switch Fixes ================= */
+  #theme-toggle-btn {
+    position: fixed !important; top: 14px !important; left: 16px !important; right: auto !important;
+    width: 30px !important; height: 30px !important; z-index: 950 !important;
+  }
+  .ios-switch {
+    position: relative !important; width: 44px !important; height: 24px !important;
+    min-width: 44px !important; padding: 0 !important;
+    background: rgba(120, 120, 128, 0.32) !important; border-radius: 99px !important;
+    display: inline-block !important; border: none !important; cursor: pointer !important;
+    transition: background 0.22s ease !important;
+  }
+  .ios-switch.on { background: var(--success) !important; }
+  .ios-switch-thumb {
+    position: absolute !important; top: 2px !important; left: 2px !important;
+    width: 20px !important; height: 20px !important; border-radius: 50% !important;
+    background: #FFFFFF !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28) !important;
+    transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1) !important;
+  }
+  .ios-switch.on .ios-switch-thumb {
+    transform: translateX(20px) !important;
+  }
+  .brand-left { padding-left: 28px; }
+  .vault-contents-card {
+    background: var(--group-bg); border: 1px solid var(--stroke);
+    border-radius: 12px; padding: 10px 13px; display: flex; flex-direction: column; gap: 6px;
+  }
+  .recent-file-row {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 11px; color: var(--text-dim); padding: 3px 0;
+    border-bottom: 1px solid var(--ink-line);
+  }
+  .recent-file-row:last-child { border-bottom: none; }
+
+
+  /* ================= v10.0 Gravity Cascade ("Painting Drop") & Ethereal Defade ================= */
+  @keyframes paintingDropLeft {
+    0%   { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); filter: blur(0); }
+    18%  { opacity: 1; transform: translateY(5px) rotate(-3.5deg) scale(0.995); }
+    38%  { opacity: 0.92; transform: translateY(24px) rotate(-6.2deg) scale(0.97); }
+    100% { opacity: 0; transform: translateY(185px) rotate(-11.5deg) scale(0.88); filter: blur(6px); }
+  }
+  @keyframes paintingDropRight {
+    0%   { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); filter: blur(0); }
+    18%  { opacity: 1; transform: translateY(5px) rotate(3.8deg) scale(0.995); }
+    38%  { opacity: 0.92; transform: translateY(24px) rotate(6.5deg) scale(0.97); }
+    100% { opacity: 0; transform: translateY(185px) rotate(11.5deg) scale(0.88); filter: blur(6px); }
+  }
+  @keyframes cardFrameDrop {
+    0%   { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(110px) scale(0.92); filter: blur(10px); }
+  }
+  .gravity-drop-l {
+    animation: paintingDropLeft 0.92s cubic-bezier(0.42, 0.0, 0.68, 0.22) forwards !important;
+    pointer-events: none !important;
+  }
+  .gravity-drop-r {
+    animation: paintingDropRight 0.92s cubic-bezier(0.42, 0.0, 0.68, 0.22) forwards !important;
+    pointer-events: none !important;
+  }
+  .card-frame-dropping {
+    animation: cardFrameDrop 0.95s cubic-bezier(0.42, 0.0, 0.68, 0.22) 0.32s forwards !important;
+  }
+
+  /* Ethereal Defade Materialization for Unlocked Dashboard */
+  @keyframes etherealDefadeCard {
+    0%   { opacity: 0; transform: translateY(-12px) scale(0.965); filter: blur(14px); }
+    100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  }
+  @keyframes etherealItemRise {
+    0%   { opacity: 0; transform: translateY(18px) scale(0.98); filter: blur(6px); }
+    100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  }
+  .ethereal-defade-in {
+    animation: etherealDefadeCard 0.92s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  }
+  .ethereal-stagger-item {
+    opacity: 0;
+    animation: etherealItemRise 0.82s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  /* Top-Right Info Button ('ⓘ') & Architecture Modal Sheet */
+  #info-modal-btn {
+    position: fixed; top: 14px; right: 16px; z-index: 950;
+    width: 30px; height: 30px; padding: 0; border-radius: 50%;
+    background: var(--glass-btn-bg); border: 1px solid var(--stroke);
+    color: var(--text-dim); font-size: 13px; font-weight: 700;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', serif;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); backdrop-filter: blur(12px);
+  }
+  #info-modal-btn:hover { color: var(--accent); border-color: var(--accent); transform: scale(1.05); }
+
+  #arch-info-modal {
+    position: fixed; inset: 0; z-index: 2100;
+    background: rgba(10, 10, 14, 0.62);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+  }
+  #arch-info-modal.open { opacity: 1; pointer-events: auto; }
+  .arch-modal-card {
+    width: 380px; padding: 24px; border-radius: 22px;
+    background: var(--glass-card-bg); border: 1px solid var(--stroke);
+    box-shadow: var(--shadow-card); text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    transform: translateY(14px) scale(0.96);
+    transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  #arch-info-modal.open .arch-modal-card { transform: translateY(0) scale(1); }
+
+  /* Smart Security Command Center Styles */
+  .posture-hero {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 14px; border-radius: 14px;
+    background: linear-gradient(135deg, rgba(0, 113, 227, 0.10), rgba(40, 205, 65, 0.10));
+    border: 1px solid rgba(0, 113, 227, 0.22);
+  }
+  .posture-score-ring {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: var(--success-soft); border: 2px solid var(--success);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 800; color: var(--success);
+    font-family: 'SF Mono', monospace;
+  }
+  .security-badge-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+  }
+  .sec-guard-pill {
+    padding: 7px 10px; border-radius: 10px;
+    background: var(--group-bg); border: 1px solid var(--stroke);
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 11px; font-weight: 600; color: var(--text);
+  }
+  .sec-dot-ok { width: 7px; height: 7px; border-radius: 50%; background: var(--success); display: inline-block; }
+
+
+  /* ================= v14.0 Standby Keycap Badge & Intruder Mugshot Gallery ================= */
+  .standby-keycap-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 7px 15px; border-radius: 99px;
+    background: var(--accent-soft); border: 1px solid rgba(0, 113, 227, 0.28);
+    color: var(--accent); font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: transform 0.15s ease, background 0.2s ease;
+    margin-top: 2px;
+  }
+  .standby-keycap-pill:hover { transform: scale(1.03); background: rgba(0, 113, 227, 0.16); }
+  .keycap-box {
+    padding: 2px 7px; border-radius: 5px;
+    background: var(--glass-btn-bg); border: 1px solid var(--stroke);
+    font-family: 'SF Mono', monospace; font-size: 10.5px; font-weight: 700;
+    color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  }
+  .intruder-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; width: 100%;
+  }
+  .intruder-card {
+    background: var(--group-bg); border: 1px solid rgba(255, 59, 48, 0.30);
+    border-radius: 9px; padding: 4px; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  }
+  .intruder-card img {
+    width: 100%; height: 58px; object-fit: cover; border-radius: 6px;
+  }
+  .intruder-meta {
+    font-size: 8.5px; color: var(--danger); font-family: 'SF Mono', monospace;
+    text-align: center; line-height: 1.2;
+  }
+
+</style>
+</head>
+<body>
+
+<button id="theme-toggle-btn" title="Switch Light / Dark Appearance" aria-label="Toggle theme" onclick="toggleGlassTheme()">
+  <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
+</button>
+
+<div id="recovery-key-warning" class="hidden">
+  <span>⚠️ BitLocker Recovery Key file detected on the vault drive. Move it off this drive and Shift+Delete the copy on E:\LockerDrive.</span>
+</div>
+
+
+<button id="info-modal-btn" title="LockerDrive Architecture & Security Specs" aria-label="Architecture Info" onclick="toggleArchInfoModal(true)">i</button>
+
+<div id="arch-info-modal" aria-hidden="true" onclick="if(event.target===this) toggleArchInfoModal(false)">
+  <div class="arch-modal-card">
+    <div class="wordmark-badge">LockerDrive v10.0 Architecture</div>
+    <h3 style="font-size:16px;font-weight:700;color:var(--text);">Hardware-Accelerated BitLocker Vault</h3>
+    <p style="font-size:12px;color:var(--text-dim);line-height:1.5;">
+      LockerDrive protects your files inside a real BitLocker XTS-AES-256 VHDX volume. Your 6-angle 3D TrueDepth Face ID templates, Argon2id PIN state, and 96-bit recovery key are DPAPI-wrapped and HMAC-SHA256 bound to your vault secret with an off-drive witness in %LOCALAPPDATA%.
+    </p>
+    <div class="chip-row">
+      <span class="mini-chip">BitLocker XTS-AES-256</span>
+      <span class="mini-chip">12-Layer Anti-Spoof</span>
+      <span class="mini-chip">Argon2id + DPAPI</span>
+      <span class="mini-chip">Zero-Prompt UAC Daemon</span>
+      <span class="mini-chip">Win+L & USB Kill-Switch</span>
+    </div>
+    <div style="font-size:10.5px;color:var(--text-faint);">Engineered by Kushal · Runs 100% Offline on KUSHALPC</div>
+    <button type="button" class="btn btn-primary btn-block" onclick="toggleArchInfoModal(false)">Done</button>
+  </div>
+</div>
+
+<div id="backdrop"></div>
+
+
+<div id="motion-transition-overlay" aria-hidden="true">
+  <div class="transition-card" id="transition-card-box">
+    <svg class="transition-padlock-lg" id="transition-padlock-svg" viewBox="0 0 32 32" fill="none">
+      <g class="padlock-shackle">
+        <path d="M9.5 14V10.5C9.5 6.91 12.41 4 16 4C19.59 4 22.5 6.91 22.5 10.5V14" stroke="#B3B7BD" stroke-width="3.2" stroke-linecap="round"/>
+        <path d="M16 4C19.59 4 22.5 6.91 22.5 10.5V14" stroke="#8C9198" stroke-width="3.2" stroke-linecap="round"/>
+      </g>
+      <rect x="5" y="13" width="22" height="16" rx="3.5" fill="#F5B016"/>
+      <path d="M16 13H23.5C25.43 13 27 14.57 27 16.5V25.5C27 27.43 25.43 29 23.5 29H16V13Z" fill="#D6920B"/>
+      <circle cx="16" cy="19.5" r="2.2" fill="#33373B"/>
+      <path d="M14.8 20.5H17.2L17.9 25.2H14.1L14.8 20.5Z" fill="#33373B"/>
+    </svg>
+    <div id="transition-title" style="font-size:16px;font-weight:700;">Sealing Vault...</div>
+    <div id="transition-subtitle" style="font-size:12px;color:#98989D;">BitLocker XTS-AES-256 Guard</div>
+    <div class="transition-steps" id="transition-steps-box">
+      <div class="t-step active" id="tstep-1"><span>●</span><span>Locking BitLocker XTS-AES-256 volume...</span></div>
+      <div class="t-step" id="tstep-2"><span>○</span><span>Cloaking VHDX container (+h +s)...</span></div>
+      <div class="t-step" id="tstep-3"><span>○</span><span>Dismounting virtual drive V:\...</span></div>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+
+  <!-- 1. Loading View -->
+  <div id="view-loading" class="view">
+    <div class="glass-card card-compact">
+      <div class="wordmark-badge">LockerDrive Security</div>
+      <div id="status-text" style="font-size:14px;font-weight:600;color:var(--text-dim);">Starting Vault Engine...</div>
+    </div>
+  </div>
+
+  <!-- 2. Drive & Volume Selector View -->
+  <div id="view-no-drive" class="view hidden" inert aria-hidden="true">
+    <div class="glass-card card-compact">
+      <div class="wordmark-badge">Drive & Volume Setup</div>
+      <div class="icon-tile"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 12H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></span></div>
+      <p id="no-drive-desc">Select a connected drive below to open an existing vault or initialize a new BitLocker XTS-AES-256 volume.</p>
+
+      <div class="apple-group" style="width:100%;">
+        <div class="apple-row">
+          <div class="apple-row-info">
+            <span class="apple-row-title">Vault Host Drive</span>
+            <span class="apple-row-sub">Physical USB or local disk</span>
+          </div>
+          <select id="no-drive-select" aria-label="Select Target Drive" style="width:185px;"></select>
+        </div>
+        <div class="apple-row">
+          <div class="apple-row-info">
+            <span class="apple-row-title">New Vault Capacity (GB)</span>
+            <span class="apple-row-sub">Virtual decrypted drive</span>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <select id="no-drive-mount-select" class="hidden">
+              <option value="V">V:\</option><option value="Z">Z:\</option><option value="X">X:\</option><option value="W">W:\</option>
+            </select>
+            <input type="number" id="no-drive-size-gb" value="20" min="2" max="500" style="width:68px;padding:6px;font-size:12.5px;letter-spacing:0;" title="New Vault Size in GB">
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row-split">
+        <button class="btn btn-glass" onclick="applyDriveSelectionFromNoDrive()">Use Selected Drive</button>
+        <button class="btn btn-glass" onclick="toggleProvisionBox()">Initialize / Register…</button>
+      </div>
+
+      <div id="no-drive-provision-box" class="hidden" style="width:100%;display:flex;flex-direction:column;gap:7px;">
+        <input type="password" id="provision-vault-pw" placeholder="BitLocker Vault Password (6+ chars)" style="letter-spacing:0.06em;">
+        <div class="btn-row-split">
+          <button class="btn btn-primary" onclick="submitCreateVaultVolume()">Create New VHDX</button>
+          <button class="btn btn-glass" onclick="submitRegisterSecretFromNoDrive()">Link Existing VHDX</button>
+        </div>
+      </div>
+
+      <div id="no-drive-msg" style="font-size:11.5px;color:var(--accent);min-height:16px;font-weight:500;"></div>
+      <button class="btn btn-primary btn-block" id="recheck-drive-btn" onclick="recheckStatus()">Refresh Drives & Check Again</button>
+    </div>
+  </div>
+
+  <!-- 3. First-Time PIN Setup View -->
+  <div id="view-setup" class="view hidden" inert aria-hidden="true">
+    <div class="glass-card card-compact">
+      <div class="wordmark-badge">First-Time Setup</div>
+      <div class="icon-tile"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span></div>
+      <p>Choose a 4–12 digit numeric PIN for your vault.</p>
+      <div class="input-wrap">
+        <input type="password" id="setup-pin" placeholder="Choose PIN (4–12 digits)" inputmode="numeric" maxlength="12" oninput="conditionPinInput(this, 'setup-pin-len')" onkeydown="if(event.key==='Enter') document.getElementById('setup-pin-confirm').focus()">
+        <span id="setup-pin-len" class="pin-len-pill">0/4+</span>
+      </div>
+      <div class="input-wrap">
+        <input type="password" id="setup-pin-confirm" placeholder="Confirm PIN" inputmode="numeric" maxlength="12" oninput="conditionPinInput(this, 'setup-confirm-len')" onkeydown="if(event.key==='Enter') submitSetup()">
+        <span id="setup-confirm-len" class="pin-len-pill">0/4+</span>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="submitSetup()">Save PIN</button>
+      <div id="setup-error" style="font-size:12px;color:var(--danger);min-height:16px;"></div>
+      <button class="link-btn hidden" id="setup-go-unlock-btn" onclick="setView('locked'); waitForPrewarmThenScan();">Verify with Face ID / Recovery Code</button>
+    </div>
+  </div>
+
+  <!-- 4. Recovery Code Display View -->
+  <div id="view-recovery-code" class="view hidden" inert aria-hidden="true">
+    <div class="glass-card card-compact">
+      <div class="wordmark-badge">Emergency Recovery Key</div>
+      <p>Write this 96-bit recovery key down somewhere safe off this drive. It will not be shown again.</p>
+      <div id="recovery-code-display" aria-live="polite"></div>
+      <button class="btn btn-glass btn-block" onclick="copyRecoveryCode()"><span id="copy-recovery-lbl">Copy to Clipboard</span></button>
+      <button class="btn btn-primary btn-block" onclick="acknowledgeRecoveryCode()">I've Saved It</button>
+    </div>
+  </div>
+
+  <!-- 5. Locked / Face ID + PIN View -->
+  <div id="view-locked" class="view hidden" inert aria-hidden="true">
+    <div class="glass-card card-locked">
+      <div class="wordmark-badge" id="lock-header-badge"><svg class="padlock-svg" viewBox="0 0 32 32" fill="none"><g class="padlock-shackle"><path d="M9.5 14V10.5C9.5 6.91 12.41 4 16 4V4C12.41 4 9.5 6.91 9.5 10.5V14Z" fill="#B8BDC2"/><path d="M9.5 14V10.5C9.5 6.91 12.41 4 16 4C19.59 4 22.5 6.91 22.5 10.5V14" stroke="#B3B7BD" stroke-width="3.2" stroke-linecap="round"/><path d="M16 4C19.59 4 22.5 6.91 22.5 10.5V14" stroke="#8C9198" stroke-width="3.2" stroke-linecap="round"/></g><rect x="5" y="13" width="22" height="16" rx="3.5" fill="#F5B016"/><path d="M16 13H23.5C25.43 13 27 14.57 27 16.5V25.5C27 27.43 25.43 29 23.5 29H16V13Z" fill="#D6920B"/><circle cx="16" cy="19.5" r="2.2" fill="#33373B"/><path d="M14.8 20.5H17.2L17.9 25.2H14.1L14.8 20.5Z" fill="#33373B"/></svg><span>LockerDrive Biometric Guard</span></div>
+      <div id="scan-ring-container">
+        <svg id="scan-ring" viewBox="0 0 120 120" aria-hidden="true">
+          <circle cx="60" cy="60" r="54" fill="none" stroke="var(--ink-line)" stroke-width="2.5"/>
+          <circle id="ring-progress" cx="60" cy="60" r="54" fill="none" stroke="var(--accent)" stroke-width="2.8" stroke-linecap="round" stroke-dasharray="339.3" stroke-dashoffset="339.3"/>
+        </svg>
+        <div id="scan-glyph" aria-hidden="true"></div>
+        <img id="scan-camera-preview" alt="" aria-hidden="true"/>
+        <canvas id="scan-orb" aria-hidden="true"></canvas>
+      </div>
+      <div id="status-text-locked" aria-live="polite">Looking for your face...</div>
+      <div id="status-detail" aria-live="polite"></div>
+      <div id="standby-wake-pill" class="standby-keycap-pill hidden" onclick="wakeFromStandbyAndScan()" title="Press Spacebar or click to scan Face ID">
+        <span class="keycap-box">␣ Space</span><span>Press Spacebar to Scan Face ID</span>
+      </div>
+      <div id="lockout-banner" class="hidden" aria-live="polite"></div>
+      <div id="scan-hud-pills" class="biometric-telemetry-bars hidden" aria-hidden="true">
+        <div class="bio-meter">
+          <div class="bio-meter-top"><span id="hud-pill-match">Match 0%</span><span id="hud-pill-light">Light OK</span></div>
+          <div class="bio-meter-track"><div id="bio-fill-match" class="bio-meter-fill"></div></div>
+        </div>
+        <div class="bio-meter">
+          <div class="bio-meter-top"><span id="hud-pill-live">12-Layer Live 0%</span><span style="color:var(--success);">rPPG · 3D Depth</span></div>
+          <div class="bio-meter-track"><div id="bio-fill-live" class="bio-meter-fill"></div></div>
+        </div>
+      </div>
+      <div id="pin-fallback" class="hidden">
+        <div class="input-wrap">
+          <input type="password" id="pin-input" placeholder="Enter PIN" inputmode="numeric" maxlength="12" oninput="conditionPinInput(this, 'unlock-pin-len')" onkeydown="if(event.key==='Enter') submitPin()">
+          <span id="unlock-pin-len" class="pin-len-pill">PIN</span>
+        </div>
+        <div id="onscreen-keypad" class="pin-keypad hidden"></div>
+        <button class="btn btn-primary btn-block" id="unlock-pin-submit-btn" onclick="submitPin()">Unlock Vault</button>
+        <div style="display:flex;justify-content:space-between;width:100%;">
+          <button class="link-btn" id="back-to-face-btn" onclick="showFaceScan()">Scan Face Again</button>
+          <button class="link-btn" id="toggle-keypad-btn" onclick="toggleOnscreenKeypad()">Scramble Keypad</button>
+        </div>
+        <button class="link-btn hidden" id="first-time-enroll-btn" onclick="reEnrollFace('locked')">Set Up Face ID</button>
+        <button class="link-btn" id="use-recovery-btn" onclick="showRecoveryInput()">Forgot PIN? Use Recovery Key</button>
+        <div id="recovery-input-section" class="hidden">
+          <input type="text" id="recovery-code-input" placeholder="XXXXXX-XXXXXX-XXXXXX-XXXXXX" maxlength="27" oninput="conditionRecoveryInput(this)" onkeydown="if(event.key==='Enter') submitRecoveryCode()">
+          <button class="btn btn-glass btn-block" onclick="submitRecoveryCode()">Unlock with Recovery Key</button>
+        </div>
+      </div>
+      <button class="link-btn hidden" id="retry-scan-btn" onclick="startFaceScan()">Retry Face Scan</button>
+      <button class="link-btn" id="use-pin-btn" onclick="showPinFallback()">Use PIN Instead</button>
+    </div>
+  </div>
+
+  <!-- 6. Apple Face ID 64-Tick Live TrueDepth Studio -->
+  <div id="view-enroll" class="view hidden" inert aria-hidden="true">
+    <div class="glass-card card-enroll">
+      <div class="wordmark-badge">Apple Face ID Setup</div>
+      <div class="enroll-dial-wrap">
+        <div id="enroll-dial-3d" class="enroll-dial-3d">
+          <svg class="enroll-svg" viewBox="0 0 200 200">
+            <g id="dial-ticks-group"></g>
+          </svg>
+        </div>
+        <div class="enroll-inner-reticle">
+          <img id="enroll-camera-preview" alt="" aria-hidden="true"/>
+          <canvas id="enroll-mesh-canvas" width="138" height="138" aria-hidden="true"></canvas>
+          <div class="enroll-crosshair"></div>
+          <div id="enroll-cursor" class="enroll-face-cursor">
+            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M9.5 15a3.5 3.5 0 0 0 5 0"/></svg></span>
+          </div>
+          <div id="enroll-check-bloom" class="enroll-check-bloom" aria-hidden="true">
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="enroll-coaching-pill">
+        <span id="enroll-hint" aria-live="polite">Position your face in the frame</span>
+      </div>
+
+      <div class="enroll-pose-buckets" style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;">
+        <div class="pose-chip" id="chip-center"><span>Center</span><span class="chip-status">•</span></div>
+        <div class="pose-chip" id="chip-left"><span>Left</span><span class="chip-status">•</span></div>
+        <div class="pose-chip" id="chip-right"><span>Right</span><span class="chip-status">•</span></div>
+        <div class="pose-chip" id="chip-up"><span>Up</span><span class="chip-status">•</span></div>
+        <div class="pose-chip" id="chip-down"><span>Down</span><span class="chip-status">•</span></div>
+      </div>
+      <div class="enroll-pose-buckets" style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:-4px;">
+        <div class="pose-chip" id="chip-up_left"><span>Up-Left</span><span class="chip-status">•</span></div>
+        <div class="pose-chip" id="chip-up_right"><span>Up-Right</span><span class="chip-status">•</span></div>
+        <div class="pose-chip" id="chip-down_left"><span>Dn-Left</span><span class="chip-status">•</span></div>
+        <div class="pose-chip" id="chip-down_right"><span>Dn-Right</span><span class="chip-status">•</span></div>
+      </div>
+
+      <div class="enroll-progress-bar-wrap">
+        <div id="enroll-progress-fill" class="enroll-progress-bar-fill"></div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;width:100%;font-size:11.5px;color:var(--text-dim);">
+        <span id="enroll-pct-text" class="mono">0%</span>
+        <span id="enroll-quality-text">Move your head slowly in a circle</span>
+      </div>
+
+      <button class="btn btn-glass btn-block" onclick="cancelEnrollment()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- 7. Unlocked Dashboard (Full-Width Apple Sequoia Segmented Layout) -->
+  <div id="view-unlocked" class="view hidden" inert aria-hidden="true">
+    <div class="glass-card card-dashboard">
+      <div class="top-header-bar">
+        <div class="top-brand-row">
+          <div class="brand-left">
+            <div class="brand-tile" style="background:transparent;box-shadow:none;"><svg class="padlock-svg" viewBox="0 0 32 32" fill="none"><g class="padlock-shackle"><path d="M9.5 14V10.5C9.5 6.91 12.41 4 16 4V4C12.41 4 9.5 6.91 9.5 10.5V14Z" fill="#B8BDC2"/><path d="M9.5 14V10.5C9.5 6.91 12.41 4 16 4C19.59 4 22.5 6.91 22.5 10.5V14" stroke="#B3B7BD" stroke-width="3.2" stroke-linecap="round"/><path d="M16 4C19.59 4 22.5 6.91 22.5 10.5V14" stroke="#8C9198" stroke-width="3.2" stroke-linecap="round"/></g><rect x="5" y="13" width="22" height="16" rx="3.5" fill="#F5B016"/><path d="M16 13H23.5C25.43 13 27 14.57 27 16.5V25.5C27 27.43 25.43 29 23.5 29H16V13Z" fill="#D6920B"/><circle cx="16" cy="19.5" r="2.2" fill="#33373B"/><path d="M14.8 20.5H17.2L17.9 25.2H14.1L14.8 20.5Z" fill="#33373B"/></svg></div>
+            <div>
+              <div class="brand-name">LockerDrive</div>
+              <div class="brand-sub" id="session-uptime-badge">Idle lock 5:00</div>
+            </div>
+          </div>
+          <div class="status-pill-right" id="daemon-status-chip">
+            <canvas id="ambient-sidebar-orb" width="18" height="18" style="width:18px;height:18px;"></canvas>
+            <span>Vault Active</span>
+          </div>
+        </div>
+        <div class="segmented-nav" role="tablist">
+          <button class="nav-item active" data-panel="files" onclick="showPanel('files')">Vault</button>
+          <button class="nav-item" data-panel="settings" onclick="showPanel('settings')">Settings</button>
+          <button class="nav-item" data-panel="about" onclick="showPanel('about')">Security</button>
+        </div>
+      </div>
+
+      <div class="main-panel">
+        <!-- Panel 1: Files & Storage -->
+        <div id="panel-files" class="panel active">
+          <div>
+            <h2>Encrypted Volume Ready</h2>
+            <p>BitLocker XTS-AES-256 volume mounted and guarded by session-lock, sleep, and USB removal watchdogs.</p>
+          </div>
+          <div class="metric-tiles">
+            <div class="metric-tile"><span class="metric-val" id="metric-mount-val">V:\</span><span class="metric-lbl">Drive</span></div>
+            <div class="metric-tile"><span class="metric-val" id="metric-templates-val">6 Angles</span><span class="metric-lbl">Face ID</span></div>
+            <div class="metric-tile"><span class="metric-val" id="metric-status-val">Active</span><span class="metric-lbl">UAC Guard</span></div>
+          </div>
+          <div class="storage-card">
+            <div class="storage-row">
+              <span id="vault-storage-label">Volume Capacity</span>
+              <span id="vault-storage-text" class="mono">Mounted · XTS-AES-256</span>
+            </div>
+            <div class="storage-bar-track">
+              <div id="vault-storage-bar" class="storage-bar-fill"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:3px;">
+              <span style="font-size:11px;color:var(--text-faint);">Dynamic VHDX Container</span>
+              <button class="link-btn" style="padding:2px 6px;font-size:11.5px;" onclick="toggleExpandSheet()">+ Expand Capacity…</button>
+            </div>
+            <div id="inline-expand-sheet" class="hidden" style="margin-top:6px;padding-top:8px;border-top:1px solid var(--ink-line);display:flex;flex-direction:column;gap:7px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
+                <span style="font-size:11.5px;font-weight:600;">New Total Size (GB):</span>
+                <div style="display:flex;gap:4px;">
+                  <button type="button" class="btn btn-glass btn-sm" onclick="bumpExpandGb(5)">+5 GB</button>
+                  <button type="button" class="btn btn-glass btn-sm" onclick="bumpExpandGb(10)">+10 GB</button>
+                  <button type="button" class="btn btn-glass btn-sm" onclick="bumpExpandGb(25)">+25 GB</button>
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;">
+                <input type="number" id="expand-gb-input" value="35" min="5" max="2048" style="width:95px;padding:7px;font-size:13px;letter-spacing:0;">
+                <button type="button" class="btn btn-primary" style="flex:1;padding:7px 12px;" onclick="submitExpandStorageInline()">Apply Expansion</button>
+              </div>
+              <div id="expand-sheet-msg" style="font-size:11px;color:var(--accent);min-height:14px;"></div>
+            </div>
+          </div>
+
+                    <div class="vault-contents-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:11.5px;font-weight:600;color:var(--text);">Vault Contents Inspector</span>
+              <span id="vault-files-count-badge" class="mono" style="font-size:11px;color:var(--accent);font-weight:600;">0 files · 0 folders</span>
+            </div>
+            <div id="vault-recent-files-list" style="font-size:11px;color:var(--text-dim);">Encrypted volume ready for secure file operations.</div>
+          </div>
+          <div class="quick-actions-grid">
+            <button type="button" class="quick-action-tile" onclick="shredAndImportFile()" title="Move a file into V:\ and shred the unencrypted original">
+              <span>🔥</span><span>Shred & Import File</span>
+            </button>
+            <button type="button" class="quick-action-tile" onclick="triggerDecoyCamouflage()" title="Instant Boss-Key: Lock V:\ and switch to Kushal Studios Arcade">
+              <span>🎮</span><span>Camouflage Hub</span>
+            </button>
+            <button type="button" class="quick-action-tile" onclick="scrubClipboardNow()" title="Wipe sensitive data from Windows clipboard">
+              <span>🧹</span><span>Scrub Clipboard</span>
+            </button>
+            <button type="button" class="quick-action-tile" onclick="runHealthCheckNow()">
+              <span>🛡️</span><span>Integrity Check</span>
+            </button>
+          </div>
+          <div class="cta-stack">
+            <button class="btn btn-primary btn-block" onclick="openExplorer()">Open Encrypted Vault in Explorer (V:\)</button>
+            <div class="btn-row-split">
+              <button class="btn btn-glass" onclick="lockVault(false)">Lock to Standby</button>
+              <button class="btn btn-danger" onclick="lockVault(true)">Lock & Exit App</button>
+            </div>
+          </div>
+          <div id="lock-message" aria-live="polite"></div>
+        </div>
+
+        <!-- Panel 2: Full-Width Apple Settings -->
+        <div id="panel-settings" class="panel">
+          <div class="section-label">Drive, Mount & Auto-Lock</div>
+          <div class="apple-group">
+            <div class="apple-row">
+              <div class="apple-row-info">
+                <span class="apple-row-title">Host Drive</span>
+                <span class="apple-row-sub">Physical drive storing lockerdrive.vhdx</span>
+              </div>
+              <select id="settings-drive-select" style="width:165px;"></select>
+            </div>
+            <div class="apple-row">
+              <div class="apple-row-info">
+                <span class="apple-row-title">Inactivity Auto-Lock Timer</span>
+                <span class="apple-row-sub">Decrypted drive letter & inactivity timer</span>
+              </div>
+              <div style="display:flex;gap:6px;">
+                <select id="settings-mount-select" class="hidden">
+                  <option value="V">V:\</option><option value="Z">Z:\</option><option value="X">X:\</option><option value="W">W:\</option>
+                </select>
+                <select id="settings-idle-select" style="width:82px;" onchange="saveDriveAndIdleConfig()">
+                  <option value="1">1 min</option><option value="3">3 min</option><option value="5" selected>5 min</option><option value="10">10 min</option><option value="15">15 min</option>
+                </select>
+              </div>
+            </div>
+            <div class="apple-row">
+              <div class="apple-row-info">
+                <span class="apple-row-title">Stealth Drive Cloaking</span>
+                <span class="apple-row-sub" id="stealth-cloak-sub">Hides E:\LockerDrive & .vhdx in Explorer (attrib +h +s)</span>
+              </div>
+              <button type="button" id="stealth-cloak-switch" class="ios-switch on" role="switch" aria-checked="true" onclick="toggleStealthCloakSwitch()">
+                <div class="ios-switch-thumb"></div>
+              </button>
+            </div>
+            <div class="apple-row">
+              <div class="apple-row-info">
+                <span class="apple-row-title">Zero-Prompt UAC Session</span>
+                <span class="apple-row-sub">Keeps elevated BitLocker helper warm</span>
+              </div>
+              <div style="display:flex;gap:6px;">
+                <button class="btn btn-glass btn-sm" id="uac-daemon-btn" onclick="activateUacDaemon()">UAC Active</button>
+                <button class="btn btn-primary btn-sm" onclick="saveDriveAndIdleConfig()">Save</button>
+              </div>
+            </div>
+                    </div>
+          <div class="apple-group" style="margin-top:-4px;">
+            <div class="apple-row">
+              <div class="apple-row-info">
+                <span class="apple-row-title">New Vault / Switch Drive Wizard</span>
+                <span class="apple-row-sub">Create a new BitLocker vault or register another USB drive</span>
+              </div>
+              <button type="button" class="btn btn-glass btn-sm" onclick="openNewVaultSetupWizard()">Setup New Vault &rarr;…</button>
+            </div>
+          </div>
+          <div id="drive-config-message" aria-live="polite"></div>
+
+          <div class="section-label">Biometrics & Authentication</div>
+          <div class="apple-group">
+            <div class="apple-row">
+              <div class="apple-row-info">
+                <span class="apple-row-title">3D Face ID Biometrics</span>
+                <span class="apple-row-sub">360° multi-frame burst capture + 12-layer rPPG/3D-Depth</span>
+              </div>
+              <button class="btn btn-glass btn-sm" onclick="reEnrollFace('unlocked')">Re-Enroll Face ID</button>
+            </div>
+            <div class="apple-row">
+              <div class="apple-row-info">
+                <span class="apple-row-title">Emergency Recovery Key</span>
+                <span class="apple-row-sub">96-bit offline backup key</span>
+              </div>
+              <div style="display:flex;gap:5px;">
+                <button class="btn btn-glass btn-sm" onclick="generateRecoveryCode(false)">View / Ensure</button>
+                <button class="btn btn-glass btn-sm" onclick="generateRecoveryCode(true)">Rotate</button>
+              </div>
+            </div>
+          </div>
+          <div id="settings-message" aria-live="polite"></div>
+          <div id="generate-recovery-message" aria-live="polite"></div>
+
+          <div class="section-label">Change Vault PIN</div>
+          <div class="apple-group" style="padding:10px 12px;gap:7px;">
+            <div class="input-wrap">
+              <input type="password" id="change-pin-new" placeholder="New PIN (4–12 digits)" inputmode="numeric" maxlength="12" oninput="conditionPinInput(this, 'change-pin-len')" onkeydown="if(event.key==='Enter') document.getElementById('change-pin-confirm').focus()">
+              <span id="change-pin-len" class="pin-len-pill">0/4+</span>
+            </div>
+            <div class="input-wrap">
+              <input type="password" id="change-pin-confirm" placeholder="Confirm New PIN" inputmode="numeric" maxlength="12" oninput="conditionPinInput(this, 'change-confirm-len')" onkeydown="if(event.key==='Enter') submitChangePin()">
+              <span id="change-confirm-len" class="pin-len-pill">0/4+</span>
+            </div>
+            <button class="btn btn-glass btn-block btn-sm" onclick="submitChangePin()">Update PIN</button>
+          </div>
+          <div id="change-pin-message" aria-live="polite"></div>
+
+          <div class="section-label">Tamper-Evident Audit Log</div>
+          <button class="btn btn-glass btn-block btn-sm" onclick="loadAccessLog()">Load Recent Access History</button>
+          <div id="access-log-display" aria-live="polite"></div>
+        </div>
+
+                <!-- Panel 3: Smart Security Command Center -->
+        <div id="panel-about" class="panel">
+          <div class="posture-hero">
+            <div style="display:flex;flex-direction:column;gap:2px;">
+              <span style="font-size:13.5px;font-weight:700;color:var(--text);" id="sec-posture-title">Security Posture: Optimal</span>
+              <span style="font-size:11px;color:var(--text-dim);" id="sec-posture-sub">All 6 cryptographic & hardware guards active</span>
+            </div>
+            <div class="posture-score-ring" id="sec-posture-score">100%</div>
+          </div>
+
+          <div class="security-badge-grid">
+            <div class="sec-guard-pill"><span>BitLocker XTS-256</span><span class="sec-dot-ok"></span></div>
+            <div class="sec-guard-pill"><span>DPAPI + HMAC Seal</span><span class="sec-dot-ok" id="sec-dot-dpapi"></span></div>
+            <div class="sec-guard-pill"><span id="sec-face-lbl">Face ID (6 Angles)</span><span class="sec-dot-ok" id="sec-dot-face"></span></div>
+            <div class="sec-guard-pill"><span id="sec-chain-lbl">Audit Chain Intact</span><span class="sec-dot-ok" id="sec-dot-chain"></span></div>
+          </div>
+
+          <div class="section-label">Active Defense & Privacy Shields</div>
+          <div class="apple-group">
+            <div class="apple-row">
+              <div class="apple-row-info">
+                <span class="apple-row-title">Anti-Screenshot & Stream Shield</span>
+                <span class="apple-row-sub">Hides LockerDrive window from OBS, Discord & screenshots</span>
+              </div>
+              <button type="button" id="capture-shield-switch" class="ios-switch" role="switch" aria-checked="false" onclick="toggleCaptureShieldSwitch()">
+                <div class="ios-switch-thumb"></div>
+              </button>
+            </div>
+            <div class="apple-row">
+              <div class="apple-row-info">
+                <span class="apple-row-title">USB Unplug & Sleep Kill-Switch</span>
+                <span class="apple-row-sub">Locks V:\ within 1s if host drive is pulled or PC sleeps</span>
+              </div>
+              <span class="mono" style="font-size:10.5px;color:var(--success);font-weight:700;">ARMED</span>
+            </div>
+            <div class="apple-row">
+              <div class="apple-row-info">
+                <span class="apple-row-title">Boss-Key Decoy Camouflage</span>
+                <span class="apple-row-sub">Instantly seals V:\ and launches Kushal Studios Arcade</span>
+              </div>
+              <button type="button" class="btn btn-glass btn-sm" onclick="triggerDecoyCamouflage()">Launch Decoy</button>
+            </div>
+          </div>
+
+                    <div class="section-label">Coercion & Intruder Defense</div>
+          <div class="apple-group" style="padding:9px 12px;gap:6px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
+              <div class="apple-row-info">
+                <span class="apple-row-title">Duress / Panic PIN</span>
+                <span class="apple-row-sub">Typing this PIN at lock screen seals V:\ & opens Decoy Hub</span>
+              </div>
+              <input type="password" id="duress-pin-input" placeholder="Panic PIN" inputmode="numeric" maxlength="12" style="width:105px;padding:6px 8px;font-size:12px;">
+              <button type="button" class="btn btn-glass btn-sm" onclick="saveDuressPin()">Set</button>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span class="section-label">📸 Intruder Mugshot Trap (DPAPI Encrypted)</span>
+            <button type="button" class="link-btn" style="font-size:10.5px;padding:1px 6px;" onclick="clearIntruderGallery()">Clear</button>
+          </div>
+          <div id="intruder-gallery-box" style="font-size:11px;color:var(--text-dim);">No unauthorized intrusion attempts recorded.</div>
+          <div class="section-label">Intrusion & Access Telemetry</div>
+          <div class="metric-tiles">
+            <div class="metric-tile"><span class="metric-val" id="sec-stat-unlocks">0</span><span class="metric-lbl">Unlocks</span></div>
+            <div class="metric-tile"><span class="metric-val" id="sec-stat-blocked">0</span><span class="metric-lbl">Blocked</span></div>
+            <div class="metric-tile"><span class="metric-val" id="sec-stat-idle">5m</span><span class="metric-lbl">Idle Lock</span></div>
+          </div>
+
+          <div class="btn-row-split">
+            <button type="button" class="btn btn-glass btn-sm" onclick="refreshSecurityPosture(true)">Run Deep Cryptographic Audit</button>
+            <button type="button" class="btn btn-glass btn-sm" onclick="toggleArchInfoModal(true)">Architecture Specs ⓘ</button>
+          </div>
+          <div id="sec-command-msg" style="font-size:11px;color:var(--accent);min-height:14px;text-align:center;font-weight:600;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+</div>
+
+<script>
+let pinAttemptInFlight = false;
+let setupAttemptInFlight = false;
+let changePinAttemptInFlight = false;
+let enrollInFlight = false;
+let recoveryAttemptInFlight = false;
+
+let inactivityTimer = null;
+let telemetryInterval = null;
+let idleCountdownInterval = null;
+let lockoutCountdownInterval = null;
+let lastActivityAt = Date.now();
+let autoLockMs = 5 * 60 * 1000;
+let currentVaultTotalGb = 25;
+let stealthCloakEnabled = true;
+
+/* ---------- Theme Persistence ---------- */
+function applyStoredTheme() {
+  try {
+    const saved = localStorage.getItem('lockerdrive_theme') || 'daylight';
+    document.documentElement.setAttribute('data-theme', saved);
+  } catch (e) {}
+}
+function toggleGlassTheme() {
+  const cur = document.documentElement.getAttribute('data-theme') || 'daylight';
+  const next = cur === 'twilight' ? 'daylight' : 'twilight';
+  document.documentElement.setAttribute('data-theme', next);
+  try { localStorage.setItem('lockerdrive_theme', next); } catch (e) {}
+}
+applyStoredTheme();
+
+/* ---------- Input Conditioning & Scramble Keypad ---------- */
+function conditionPinInput(inputEl, pillId) {
+  if (!inputEl) return;
+  const cleaned = inputEl.value.replace(/[^0-9]/g, '').slice(0, 12);
+  if (inputEl.value !== cleaned) inputEl.value = cleaned;
+  if (pillId) {
+    const pill = document.getElementById(pillId);
+    if (pill) {
+      const len = cleaned.length;
+      pill.textContent = len >= 4 ? `${len} ok` : `${len}/4+`;
+      pill.classList.toggle('valid', len >= 4 && len <= 12);
+    }
+  }
+}
+
+function conditionRecoveryInput(inputEl) {
+  if (!inputEl) return;
+  const hexOnly = inputEl.value.toUpperCase().replace(/[^0-9A-F]/g, '').slice(0, 24);
+  const groups = [];
+  for (let i = 0; i < hexOnly.length; i += 6) {
+    groups.push(hexOnly.slice(i, i + 6));
+  }
+  const formatted = groups.join('-');
+  if (inputEl.value !== formatted) inputEl.value = formatted;
+}
+
+function toggleOnscreenKeypad() {
+  const kp = document.getElementById('onscreen-keypad');
+  if (!kp) return;
+  const show = kp.classList.contains('hidden');
+  if (show) {
+    renderScrambleKeypad();
+    kp.classList.remove('hidden');
+  } else {
+    kp.classList.add('hidden');
+  }
+}
+
+function renderScrambleKeypad() {
+  const kp = document.getElementById('onscreen-keypad');
+  if (!kp) return;
+  kp.innerHTML = '';
+  const digits = ['0','1','2','3','4','5','6','7','8','9'];
+  for (let i = digits.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = digits[i]; digits[i] = digits[j]; digits[j] = tmp;
+  }
+  digits.forEach(d => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'keypad-btn';
+    b.textContent = d;
+    b.onclick = () => {
+      const inp = document.getElementById('pin-input');
+      if (inp && !inp.disabled && inp.value.length < 12) {
+        inp.value += d;
+        conditionPinInput(inp, 'unlock-pin-len');
+      }
+    };
+    kp.appendChild(b);
+  });
+  const clr = document.createElement('button');
+  clr.type = 'button';
+  clr.className = 'keypad-btn';
+  clr.textContent = '⌫';
+  clr.onclick = () => {
+    const inp = document.getElementById('pin-input');
+    if (inp && !inp.disabled) {
+      inp.value = inp.value.slice(0, -1);
+      conditionPinInput(inp, 'unlock-pin-len');
+    }
+  };
+  kp.appendChild(clr);
+  const shuf = document.createElement('button');
+  shuf.type = 'button';
+  shuf.className = 'keypad-btn';
+  shuf.textContent = '↻';
+  shuf.onclick = renderScrambleKeypad;
+  kp.appendChild(shuf);
+}
+
+/* ---------- Live Lockout Countdown ---------- */
+function clearLockoutCountdown() {
+  if (lockoutCountdownInterval) {
+    clearInterval(lockoutCountdownInterval);
+    lockoutCountdownInterval = null;
+  }
+  const banner = document.getElementById('lockout-banner');
+  if (banner) {
+    banner.classList.add('hidden');
+    banner.textContent = '';
+  }
+  const pinIn = document.getElementById('pin-input');
+  const pinBtn = document.getElementById('unlock-pin-submit-btn');
+  if (pinIn) pinIn.disabled = false;
+  if (pinBtn) pinBtn.disabled = false;
+}
+
+function startLockoutCountdown(seconds) {
+  clearLockoutCountdown();
+  let rem = Math.max(1, parseInt(seconds, 10) || 60);
+  const banner = document.getElementById('lockout-banner');
+  const pinIn = document.getElementById('pin-input');
+  const pinBtn = document.getElementById('unlock-pin-submit-btn');
+  if (pinIn) pinIn.disabled = true;
+  if (pinBtn) pinBtn.disabled = true;
+
+  function renderTick() {
+    if (!banner) return;
+    banner.classList.remove('hidden');
+    const m = Math.floor(rem / 60);
+    const s = rem % 60;
+    banner.textContent = `⏳ PIN locked — wait ${m}:${s < 10 ? '0' : ''}${s}`;
+  }
+  renderTick();
+  lockoutCountdownInterval = setInterval(() => {
+    rem--;
+    if (rem <= 0) {
+      clearLockoutCountdown();
+      const st = document.getElementById('status-text-locked');
+      if (st) st.textContent = 'Lockout expired — enter your PIN.';
+      if (pinIn) pinIn.focus();
+    } else {
+      renderTick();
+    }
+  }, 1000);
+}
+
+/* ---------- Configurable Inactivity Auto-Lock ---------- */
+function armInactivityTimer() {
+  lastActivityAt = Date.now();
+  if (inactivityTimer) clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(() => { lockVault(); }, autoLockMs);
+}
+
+function updateIdleBadgeTick() {
+  if (!isUnlockedViewActive()) return;
+  const upBadge = document.getElementById('session-uptime-badge');
+  if (!upBadge) return;
+  const idleMs = Math.max(0, Date.now() - lastActivityAt);
+  const remSec = Math.max(0, Math.ceil((autoLockMs - idleMs) / 1000));
+  const m = Math.floor(remSec / 60);
+  const s = remSec % 60;
+  upBadge.textContent = `Idle lock ${m}:${s < 10 ? '0' : ''}${s}`;
+  upBadge.classList.toggle('warn', remSec <= 30);
+}
+
+function isUnlockedViewActive() {
+  const v = document.getElementById('view-unlocked');
+  return v && !v.classList.contains('hidden');
+}
+
+['mousemove', 'keydown', 'click', 'scroll'].forEach(evt => {
+  document.addEventListener(evt, () => { if (isUnlockedViewActive()) armInactivityTimer(); });
+});
+
+function pulseError(el) {
+  if (!el) return;
+  el.classList.remove('input-error');
+  void el.offsetWidth;
+  el.classList.add('input-error');
+  setTimeout(() => el.classList.remove('input-error'), 650);
+}
+
+/* ================= Autonomous ThinkingOrb Engine (libraries.dev) =================
+   Automatically transitions between hand-tuned 3D particle states:
+     - composing (ribbon): model warm-up & initialization
+     - searching (globe) : active face scan with sweeping meridian
+     - solving   (rubik) : multi-frame biometric consensus locking in
+     - listening (wave)  : waiting for PIN / recovery input
+     - working   (orbits): vault unlocking
+   ================================================================================ */
+const ORB = (() => {
+  const canvas = document.getElementById('scan-orb');
+  const ctx = canvas ? canvas.getContext('2d') : null;
+  const ringProg = document.getElementById('ring-progress');
+  const SIZE = 172, CX = 86, CY = 86, R = 50, N = 240;
+  const INK_DAY = [29, 29, 31];
+  const INK_TWI = [245, 245, 247];
+  const ACCENT = [0, 113, 227];
+  const CYAN = [50, 173, 230];
+  const SUCCESS = [40, 205, 65];
+  const WARN = [255, 159, 10];
+
+  let state = 'stopped', mode = 'composing';
+  let progress = 0, qualityWarn = false;
+  let phase = 0, flashUntil = 0, lastT = 0, raf = null;
+  let targetYaw = 0, targetPitch = 0, smoothYaw = 0, smoothPitch = 0;
+
+  // Evenly distributed 3D Fibonacci Geodesic Sphere (zero horizontal banding!)
+  const fibX = new Float32Array(N);
+  const fibY = new Float32Array(N);
+  const fibZ = new Float32Array(N);
+  const fibPhi = new Float32Array(N);
+  const golden = Math.PI * (3 - Math.sqrt(5));
+  for (let i = 0; i < N; i++) {
+    const y = 1 - (i / (N - 1)) * 2;
+    const r = Math.sqrt(Math.max(0, 1 - y * y));
+    const th = golden * i;
+    fibX[i] = Math.cos(th) * r;
+    fibY[i] = y;
+    fibZ[i] = Math.sin(th) * r;
+    fibPhi[i] = th;
+  }
+
+  function rgba(c, a) { return `rgba(${c[0]},${c[1]},${c[2]},${a})`; }
+
+  function setupHidpi() {
+    if (!canvas) return;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = SIZE * dpr; canvas.height = SIZE * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function draw(now) {
+    if (!ctx) return;
+    ctx.clearRect(0, 0, SIZE, SIZE);
+    const isTwilight = document.documentElement.getAttribute('data-theme') === 'twilight';
+    const INK = isTwilight ? INK_TWI : INK_DAY;
+    const successFlash = state === 'success', errFlash = state === 'error';
+    const shakeX = errFlash ? Math.sin(now * 0.055) * 3.0 : 0;
+
+    // Subtle atmospheric core glow
+    const glowCol = successFlash ? SUCCESS : (errFlash ? [255, 59, 48] : ACCENT);
+    const grad = ctx.createRadialGradient(CX + shakeX, CY, 2, CX + shakeX, CY, R * 1.18);
+    grad.addColorStop(0, rgba(glowCol, state === 'scanning' ? 0.16 : 0.09));
+    grad.addColorStop(1, rgba(glowCol, 0));
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(CX + shakeX, CY, R * 1.18, 0, Math.PI * 2); ctx.fill();
+
+    const rotY = phase * 0.65 + (smoothYaw * 0.020);
+    const rotX = 0.32 + Math.sin(phase * 0.4) * 0.18 + (smoothPitch * 0.018);
+    const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+    const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+
+    const pulseWave = phase * 2.4;
+    for (let i = 0; i < N; i++) {
+      let x = fibX[i], y = fibY[i], z = fibZ[i];
+
+      // Organic surface harmonic displacement
+      const harmonic = 1 + 0.045 * Math.sin(fibPhi[i] * 3 + pulseWave) * Math.cos(y * 4 - pulseWave);
+      x *= harmonic; y *= harmonic; z *= harmonic;
+
+      // 3D rotation (Yaw then Pitch)
+      const x1 = x * cosY + z * sinY;
+      const z1 = -x * sinY + z * cosY;
+      const y2 = y * cosX - z1 * sinX;
+      const z2 = y * sinX + z1 * cosX;
+
+      // Perspective projection
+      const persp = 2.6 / (2.6 - z2 * 0.55);
+      const px = CX + shakeX + x1 * R * persp;
+      const py = CY + y2 * R * persp;
+
+      const front = z2 >= -0.08;
+      const depth = front ? 0.38 + 0.62 * Math.max(0, z2) : 0.12 * (1 + z2);
+
+      // Scanning bioluminescent wave band across the 3D sphere
+      const waveDist = Math.abs(y2 - Math.sin(phase * 1.9) * 0.72);
+      const boost = front && waveDist < 0.28 ? (1 - waveDist / 0.28) : 0;
+
+      let dotColor = INK;
+      if (successFlash) dotColor = SUCCESS;
+      else if (errFlash) dotColor = [255, 59, 48];
+      else if (boost > 0.20) dotColor = boost > 0.6 ? CYAN : ACCENT;
+
+      const rad = (front ? 1.35 + 1.15 * Math.max(0, z2) : 0.75) + boost * 0.95;
+      const alpha = Math.min(1, depth * (front ? 0.88 : 0.28) + boost * 0.45);
+      if (alpha <= 0.02) continue;
+
+      ctx.fillStyle = rgba(dotColor, alpha);
+      ctx.beginPath(); ctx.arc(px, py, rad, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  function tick(now) {
+    raf = null;
+    if (state === 'stopped') { draw(now); return; }
+    const dt = Math.min(0.05, (now - lastT) / 1000 || 0.016);
+    lastT = now;
+    phase += dt * (state === 'scanning' ? 1.25 : 0.75);
+    smoothYaw += (targetYaw - smoothYaw) * 0.18;
+    smoothPitch += (targetPitch - smoothPitch) * 0.18;
+    draw(now);
+    if ((state === 'success' || state === 'error') && now > flashUntil) {
+      state = 'idle'; mode = 'listening';
+    }
+    raf = requestAnimationFrame(tick);
+  }
+
+  function schedule() {
+    if (raf !== null || !ctx) return;
+    lastT = performance.now();
+    raf = requestAnimationFrame(tick);
+  }
+
+  setupHidpi();
+
+  return {
+    set(next) {
+      state = next;
+      if (next === 'warming') mode = 'composing';
+      else if (next === 'scanning') mode = progress > 0.4 ? 'solving' : 'searching';
+      else if (next === 'idle') mode = 'listening';
+      else if (next === 'success') mode = 'working';
+      if (next === 'success' || next === 'error') flashUntil = performance.now() + (next === 'success' ? 1000 : 500);
+      schedule();
+    },
+    setProgress(p, lowQuality) {
+      progress = Math.max(0, Math.min(1, p || 0));
+      qualityWarn = !!lowQuality;
+      if (state === 'scanning') mode = progress >= 0.45 ? 'solving' : 'searching';
+      if (ringProg) {
+        ringProg.style.strokeDashoffset = (339.3 * (1 - progress)).toFixed(1);
+      }
+      schedule();
+    },
+    setPose(yaw, pitch) {
+      targetYaw = Math.max(-25, Math.min(25, yaw || 0));
+      targetPitch = Math.max(-25, Math.min(25, pitch || 0));
+    },
+    stop() {
+      if (raf !== null) { cancelAnimationFrame(raf); raf = null; }
+      state = 'stopped'; progress = 0; qualityWarn = false;
+      targetYaw = 0; targetPitch = 0; smoothYaw = 0; smoothPitch = 0;
+      draw(performance.now());
+    },
+  };
+})();
+
+function setScanScanning(on) {
+  ORB.set(on ? 'scanning' : 'idle');
+  if (!on) {
+    const sc = document.getElementById('scan-camera-preview');
+    if (sc) sc.style.opacity = '0';
+  }
+}
+
+function flashUnlockSuccess() {
+  const card = document.querySelector('#view-unlocked .glass-card');
+  if (!card) return;
+  card.classList.remove('success-in');
+  void card.offsetWidth;
+  card.classList.add('success-in');
+}
+
+/* ---------- Drive, Storage Expansion & Stealth Cloak Controls ---------- */
+function syncStealthSwitchUI(enabled) {
+  stealthCloakEnabled = !!enabled;
+  const sw = document.getElementById('stealth-cloak-switch');
+  const sub = document.getElementById('stealth-cloak-sub');
+  if (sw) {
+    sw.classList.toggle('on', stealthCloakEnabled);
+    sw.setAttribute('aria-checked', String(stealthCloakEnabled));
+  }
+  if (sub) {
+    sub.textContent = stealthCloakEnabled
+      ? 'Status: Cloaked (Hidden + System attributes active on drive)'
+      : 'Status: Visible in File Explorer (Cloak disabled)';
+  }
+}
+
+async function toggleStealthCloakSwitch() {
+  const nextState = !stealthCloakEnabled;
+  await toggleStealthCloak(nextState);
+}
+
+async function toggleStealthCloak(hide) {
+  const msg = document.getElementById('drive-config-message');
+  if (msg) msg.textContent = hide ? 'Cloaking vault folder on drive...' : 'Uncloaking vault folder on drive...';
+  const res = await callApi('toggle_stealth_cloak', !!hide);
+  if (res && res.ok) {
+    syncStealthSwitchUI(!!hide);
+    if (msg) msg.textContent = hide
+      ? 'Stealth Cloak ON — Vault folder & VHDX are hidden from Explorer.'
+      : 'Stealth Cloak OFF — Vault folder is now visible in Explorer.';
+  } else {
+    if (msg) msg.textContent = 'Could not update cloak attributes.';
+  }
+}
+
+function toggleExpandSheet() {
+  const sheet = document.getElementById('inline-expand-sheet');
+  if (!sheet) return;
+  const show = sheet.classList.contains('hidden');
+  sheet.classList.toggle('hidden', !show);
+  if (show) {
+    const inp = document.getElementById('expand-gb-input');
+    if (inp) inp.value = String(Math.max(10, Math.round(currentVaultTotalGb) + 10));
+  }
+}
+
+function bumpExpandGb(delta) {
+  const inp = document.getElementById('expand-gb-input');
+  if (!inp) return;
+  const base = Math.max(Math.round(currentVaultTotalGb), parseInt(inp.value, 10) || 25);
+  inp.value = String(base + delta);
+}
+
+async function submitExpandStorageInline() {
+  const inp = document.getElementById('expand-gb-input');
+  const msg = document.getElementById('expand-sheet-msg');
+  const gb = inp ? parseInt(inp.value, 10) : 0;
+  if (!gb || gb <= currentVaultTotalGb) {
+    if (msg) msg.textContent = `Enter a size larger than current capacity (${currentVaultTotalGb} GB).`;
+    return;
+  }
+  if (msg) msg.textContent = `Expanding VHDX & NTFS volume to ${gb} GB...`;
+  const res = await callApi('expand_vault_volume', gb);
+  if (res && res.ok) {
+    currentVaultTotalGb = gb;
+    if (msg) msg.textContent = `Volume expanded to ${gb} GB!`;
+    setTimeout(() => { refreshVaultTelemetry(); }, 500);
+  } else {
+    if (msg) msg.textContent = friendlyMessage(res ? res.message : '', 'Expansion failed.');
+  }
+}
+
+async function promptExpandStorage() {
+  showPanel('files');
+  const sheet = document.getElementById('inline-expand-sheet');
+  if (sheet) sheet.classList.remove('hidden');
+}
+
+async function populateDriveSelectors() {
+  const res = await callApi('get_drive_config');
+  if (!res || !res.ok) return;
+  const cfg = res.config || {};
+  const drives = res.drives || [];
+  if (cfg.auto_lock_minutes) autoLockMs = cfg.auto_lock_minutes * 60 * 1000;
+  if (cfg.size_gb) currentVaultTotalGb = cfg.size_gb;
+  if (cfg.stealth_cloak !== undefined) syncStealthSwitchUI(cfg.stealth_cloak);
+
+  ['no-drive-select', 'settings-drive-select'].forEach(selId => {
+    const sel = document.getElementById(selId);
+    if (!sel) return;
+    sel.innerHTML = '';
+    if (drives.length === 0) {
+      const opt = document.createElement('option');
+      opt.value = cfg.drive_letter || 'E';
+      opt.textContent = `${cfg.drive_letter || 'E'}:\\ (Disconnected)`;
+      sel.appendChild(opt);
+    } else {
+      drives.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.letter;
+        const tag = d.has_vault ? ' • Vault Ready' : '';
+        opt.textContent = `${d.letter}:\\ (${d.free_gb} GB free)${tag}`;
+        if (d.letter === cfg.drive_letter) opt.selected = true;
+        sel.appendChild(opt);
+      });
+    }
+  });
+
+  const m1 = document.getElementById('no-drive-mount-select');
+  if (m1 && cfg.mount_letter) m1.value = cfg.mount_letter;
+  const m2 = document.getElementById('settings-mount-select');
+  if (m2 && cfg.mount_letter) m2.value = cfg.mount_letter;
+  const idleSel = document.getElementById('settings-idle-select');
+  if (idleSel && cfg.auto_lock_minutes) idleSel.value = String(cfg.auto_lock_minutes);
+  const daemonBtn = document.getElementById('uac-daemon-btn');
+  if (daemonBtn) {
+    daemonBtn.textContent = res.daemon_active ? 'UAC Active' : 'Enable UAC';
+  }
+}
+
+async function applyDriveSelectionFromNoDrive() {
+  const sel = document.getElementById('no-drive-select');
+  const mnt = document.getElementById('no-drive-mount-select');
+  const sz = document.getElementById('no-drive-size-gb');
+  const msg = document.getElementById('no-drive-msg');
+  if (!sel) return;
+  if (msg) msg.textContent = `Switching target drive to ${sel.value}:\\...`;
+  const res = await callApi('update_drive_config', sel.value, mnt ? mnt.value : 'V', sz ? parseInt(sz.value, 10) : 20, Math.round(autoLockMs / 60000) || 5, stealthCloakEnabled);
+  if (res && res.ok) {
+    await boot(true);
+  }
+}
+
+function toggleProvisionBox() {
+  const box = document.getElementById('no-drive-provision-box');
+  if (box) box.classList.toggle('hidden');
+}
+
+async function submitCreateVaultVolume() {
+  const sel = document.getElementById('no-drive-select');
+  const mnt = document.getElementById('no-drive-mount-select');
+  const sz = document.getElementById('no-drive-size-gb');
+  const pw = document.getElementById('provision-vault-pw');
+  const msg = document.getElementById('no-drive-msg');
+  if (!sel || !pw || !pw.value || pw.value.length < 6) {
+    if (msg) msg.textContent = 'Enter a vault password of at least 6 characters.';
+    return;
+  }
+  if (msg) msg.textContent = 'Creating BitLocker XTS-AES-256 VHDX volume...';
+  const res = await callApi('create_vault_volume', sel.value, sz ? parseInt(sz.value, 10) : 20, mnt ? mnt.value : 'V', pw.value);
+  pw.value = '';
+  if (res && res.ok) {
+    if (msg) msg.textContent = 'Encrypted VHDX volume created! Proceeding to PIN setup...';
+    setTimeout(() => boot(), 500);
+  } else {
+    if (msg) msg.textContent = friendlyMessage(res ? res.message : '', 'Could not create volume.');
+  }
+}
+
+async function submitRegisterSecretFromNoDrive() {
+  const pw = document.getElementById('provision-vault-pw');
+  const msg = document.getElementById('no-drive-msg');
+  if (!pw || !pw.value) {
+    if (msg) msg.textContent = 'Enter your existing BitLocker vault password.';
+    return;
+  }
+  const res = await callApi('register_vault_secret', pw.value);
+  pw.value = '';
+  if (res && res.ok) {
+    if (msg) msg.textContent = 'Vault password linked! Checking vault status...';
+    setTimeout(() => boot(), 350);
+  } else {
+    if (msg) msg.textContent = 'Failed to register password.';
+  }
+}
+
+async function saveDriveAndIdleConfig() {
+  const sel = document.getElementById('settings-drive-select');
+  const mnt = document.getElementById('settings-mount-select');
+  const idle = document.getElementById('settings-idle-select');
+  const msg = document.getElementById('drive-config-message');
+  const mins = idle ? parseInt(idle.value, 10) : 5;
+  autoLockMs = mins * 60 * 1000;
+  armInactivityTimer();
+  const res = await callApi('update_drive_config', sel ? sel.value : 'E', mnt ? mnt.value : 'V', currentVaultTotalGb, mins, stealthCloakEnabled);
+  if (msg) msg.textContent = (res && res.ok)
+    ? `Saved: Host ${res.config.drive_root} → Mount ${res.config.mount_letter}:\\ (${mins}m auto-lock).`
+    : 'Failed to save configuration.';
+}
+
+async function activateUacDaemon() {
+  const msg = document.getElementById('drive-config-message');
+  if (msg) msg.textContent = 'Verifying elevated UAC session daemon...';
+  const res = await callApi('start_uac_daemon');
+  const btn = document.getElementById('uac-daemon-btn');
+  if (res && res.ok) {
+    if (btn) btn.textContent = 'UAC Active';
+    if (msg) msg.textContent = 'Zero-prompt UAC session daemon is active.';
+  } else {
+    if (msg) msg.textContent = 'UAC elevation was declined.';
+  }
+}
+
+async function refreshVaultTelemetry() {
+  if (!isUnlockedViewActive()) return;
+  const tel = await callApi('get_vault_telemetry');
+  if (!tel || !tel.ok) return;
+
+  if (tel.auto_lock_minutes) autoLockMs = tel.auto_lock_minutes * 60 * 1000;
+  if (tel.stealth_cloak !== undefined) syncStealthSwitchUI(tel.stealth_cloak);
+  if (tel.drive_connected === false && !tel.mounted) {
+    setView('no-drive');
+    return;
+  }
+
+  const mntEl = document.getElementById('metric-mount-val');
+  if (mntEl && tel.mount_letter) mntEl.textContent = tel.mount_letter;
+  const tplEl = document.getElementById('metric-templates-val');
+  if (tplEl) {
+    tplEl.textContent = tel.face_enrolled ? `${tel.template_count || 6} Angles` : 'PIN Only';
+  }
+  const stBar = document.getElementById('vault-storage-bar');
+  const stTxt = document.getElementById('vault-storage-text');
+  refreshVaultContentsCard();
+  if (tel.total_gb > 0) {
+    currentVaultTotalGb = tel.total_gb;
+    if (stBar) stBar.style.width = `${Math.max(4, Math.min(100, tel.used_pct || 0))}%`;
+    if (stTxt) stTxt.textContent = `${tel.used_gb} / ${tel.total_gb} GB (${tel.used_pct}%)`;
+  } else {
+    if (stBar) stBar.style.width = '18%';
+    if (stTxt) stTxt.textContent = tel.mounted ? 'Mounted · XTS-AES-256' : 'Locked';
+  }
+}
+
+function setView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+  const target = document.getElementById('view-' + name);
+  if (target) target.classList.remove('hidden');
+  document.querySelectorAll('.view').forEach(v => {
+    const hidden = v.classList.contains('hidden');
+    v.toggleAttribute('inert', hidden);
+    v.setAttribute('aria-hidden', String(hidden));
+  });
+  if (name === 'no-drive') {
+    populateDriveSelectors();
+  }
+  if (name === 'unlocked') {
+    clearLockoutCountdown();
+    armInactivityTimer();
+    flashUnlockSuccess();
+    refreshVaultTelemetry();
+    populateDriveSelectors();
+    if (telemetryInterval) clearInterval(telemetryInterval);
+    telemetryInterval = setInterval(refreshVaultTelemetry, 4000);
+    if (idleCountdownInterval) clearInterval(idleCountdownInterval);
+    idleCountdownInterval = setInterval(updateIdleBadgeTick, 1000);
+    updateIdleBadgeTick();
+  } else {
+    if (inactivityTimer) { clearTimeout(inactivityTimer); inactivityTimer = null; }
+    if (telemetryInterval) { clearInterval(telemetryInterval); telemetryInterval = null; }
+    if (idleCountdownInterval) { clearInterval(idleCountdownInterval); idleCountdownInterval = null; }
+  }
+  if (name !== 'locked' && typeof ORB !== 'undefined') ORB.stop();
+}
+
+function showPanel(name) {
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.panel === name));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + name));
+  if (name === 'files') refreshVaultTelemetry();
+  if (name === 'settings') populateDriveSelectors();
+  if (name === 'about') refreshSecurityPosture(false);
+}
+
+async function callApi(methodName, ...args) {
+  try {
+    return await window.pywebview.api[methodName](...args);
+  } catch (err) {
+    console.error(`${methodName} failed:`, err);
+    return { ok: false, message: 'UNEXPECTED_ERROR' };
+  }
+}
+
+function friendlyMessage(message, fallback) {
+  if (message) {
+    if (message.indexOf('WRONG:') === 0) {
+      const rem = parseInt(message.split(':')[1], 10);
+      return rem === 1
+        ? 'Incorrect PIN — 1 attempt remaining before lockout.'
+        : `Incorrect PIN — ${rem} attempts remaining.`;
+    }
+    if (message.indexOf('LOCKED:') === 0) {
+      const secs = parseInt(message.split(':')[1], 10) || 60;
+      startLockoutCountdown(secs);
+      return `Too many failed PIN attempts. Try again in ${secs}s.`;
+    }
+    if (message.indexOf('UNLOCK_ERROR:') === 0) return 'Unlock failed. Check that the vault drive is connected and try again.';
+    if (message.indexOf('LOCK_ERROR:') === 0) return 'Locking failed. Check that the vault drive is connected and try again.';
+    if (message.indexOf('ERROR:') === 0) return 'Something went wrong. Try again, and check that the vault drive is connected.';
+    if (message.indexOf('NOT_ENOUGH_GOOD_FRAMES') === 0) return 'Could not capture all 5 angles clearly. Check your lighting and try again.';
+    if (message.indexOf('TEMPLATES_CORRUPT') === 0) return 'Face templates look corrupted or tampered -- unlock with your PIN, then re-enroll from Settings.';
+    if (message === 'CAMERA_UNAVAILABLE') return 'Camera unavailable. Check that no other app is using the webcam.';
+    if (message === 'VIRTUAL_CAMERA_DETECTED') return 'Virtual camera blocked for security. Please use your physical webcam.';
+    if (message === 'MODELS_MISSING') return 'Face recognition ONNX models are missing from FaceRecog-Engine/models.';
+    if (message === 'MODELS_TAMPERED') return 'Face model files failed their integrity check. Reinstall the models before using face unlock.';
+    if (message === 'TEMPLATES_MISSING_TAMPER') return 'Face data is missing (templates were removed). Unlock with your PIN or recovery code, then re-enroll from Settings.';
+    if (message === 'NOT_ENROLLED') return 'No face enrolled yet. Unlock with your PIN first.';
+    if (message === 'NOT_AUTHENTICATED') return 'Not available before unlocking.';
+    if (message === 'ALREADY_LOCKED') return 'Vault is already locked.';
+    if (message === 'ABORTED') return 'Scan stopped.';
+    if (message === 'STATE_CORRUPT') return 'PIN state looks corrupted or tampered -- use your recovery code.';
+    if (message === 'DRIVE_NOT_CONNECTED') return 'Vault drive is not connected.';
+  }
+  return fallback !== undefined ? fallback : (message || '');
+}
+
+let bootRetries = 0;
+let faceEnrolledState = false;
+let pinSetupThisSession = false;
+
+async function boot(isManualRecheck) {
+  if (!window.pywebview || !window.pywebview.api) {
+    if (bootRetries >= 15) {
+      const st = document.getElementById('status-text');
+      if (st) st.textContent = 'Engine did not respond. Please restart LockerDrive.';
+      return;
+    }
+    bootRetries++;
+    setTimeout(() => boot(isManualRecheck), 400);
+    return;
+  }
+  bootRetries = 0;
+  try {
+    const status = await window.pywebview.api.get_status();
+    faceEnrolledState = !!status.face_enrolled;
+    if (status.auto_lock_minutes) autoLockMs = status.auto_lock_minutes * 60 * 1000;
+    if (status.can_enroll_first_time) pinSetupThisSession = true;
+    document.getElementById('recovery-key-warning').classList.toggle('hidden', !status.bitlocker_recovery_key_on_drive);
+    if (status.drive_status === 'DRIVE_NOT_CONNECTED') {
+      setView('no-drive');
+      if (isManualRecheck) {
+        const msg = document.getElementById('no-drive-msg');
+        const nowStr = new Date().toLocaleTimeString();
+        if (msg) msg.textContent = `Checked at ${nowStr} — Drive ${status.drive_letter || 'E'}:\\ is not connected.`;
+      }
+      return;
+    }
+    if (!status.secret_registered) {
+      setView('no-drive');
+      const box = document.getElementById('no-drive-provision-box');
+      if (box) box.classList.remove('hidden');
+      const msg = document.getElementById('no-drive-msg');
+      if (msg) msg.textContent = `Drive ${status.drive_letter || 'E'}:\\ connected — link your vault password or create a new VHDX.`;
+      return;
+    }
+    if (status.drive_status === 'NOT_INITIALIZED') { setView('setup'); document.getElementById('setup-pin').focus(); return; }
+
+    const backBtn = document.getElementById('back-to-face-btn');
+    if (backBtn) backBtn.classList.toggle('hidden', !faceEnrolledState);
+    const enrollNowBtn = document.getElementById('first-time-enroll-btn');
+    if (enrollNowBtn) enrollNowBtn.classList.toggle('hidden', faceEnrolledState || !pinSetupThisSession);
+
+    setView('locked');
+
+    if (typeof status.drive_status === 'string' && status.drive_status.indexOf('LOCKED:') === 0) {
+      showPinFallback();
+      const secs = parseInt(status.drive_status.split(':')[1], 10) || 60;
+      startLockoutCountdown(secs);
+      document.getElementById('status-text-locked').textContent = 'PIN temporarily locked.';
+      return;
+    }
+    if (status.drive_status === 'STATE_CORRUPT') {
+      showPinFallback();
+      showRecoveryInput();
+      document.getElementById('status-text-locked').textContent = 'PIN state looks corrupted or tampered -- use your recovery code.';
+      return;
+    }
+
+    if (faceEnrolledState) { waitForPrewarmThenScan(); }
+    else {
+      showPinFallback();
+      document.getElementById('status-text-locked').textContent = pinSetupThisSession
+        ? 'PIN set — enter your PIN or set up Face ID below.'
+        : 'No face enrolled -- enter your PIN.';
+    }
+  } catch (err) { console.error("Boot failed:", err); }
+}
+
+async function recheckStatus() {
+  const btn = document.getElementById('recheck-drive-btn');
+  const msg = document.getElementById('no-drive-msg');
+  if (btn) { btn.disabled = true; btn.textContent = 'Scanning Drives...'; }
+  if (msg) msg.textContent = 'Scanning connected USB and local disks...';
+  await populateDriveSelectors();
+  await boot(true);
+  if (btn) { btn.disabled = false; btn.textContent = 'Refresh Drives & Check Again'; }
+}
+
+async function submitSetup() {
+  if (setupAttemptInFlight) return;
+  setupAttemptInFlight = true;
+  const pin = document.getElementById('setup-pin').value;
+  const confirm = document.getElementById('setup-pin-confirm').value;
+  const result = await callApi('setup_pin', pin, confirm);
+  setupAttemptInFlight = false;
+  document.getElementById('setup-go-unlock-btn').classList.add('hidden');
+  if (result.ok) {
+    pinSetupThisSession = true;
+    document.getElementById('setup-pin').value = '';
+    document.getElementById('setup-pin-confirm').value = '';
+    if (result.recovery_code) { showRecoveryCode(result.recovery_code); }
+    else { boot(); }
+  } else if (result.message === 'FACE_REVERIFY_REQUIRED') {
+    document.getElementById('setup-error').textContent = "This vault's already set up -- verify with your face or a recovery code first, then set your PIN from Settings.";
+    document.getElementById('setup-go-unlock-btn').classList.remove('hidden');
+  } else {
+    document.getElementById('setup-error').textContent = result.message === 'MISMATCH' ? "PINs didn't match."
+      : result.message === 'INVALID_PIN' ? "PIN must be 4-12 digits."
+      : friendlyMessage(result.message);
+    pulseError(document.getElementById('setup-pin'));
+    pulseError(document.getElementById('setup-pin-confirm'));
+  }
+}
+
+let recoveryCodeReturnView = 'locked';
+
+function showRecoveryCode(code, returnView) {
+  recoveryCodeReturnView = returnView || 'locked';
+  document.getElementById('recovery-code-display').textContent = code;
+  const copyLbl = document.getElementById('copy-recovery-lbl');
+  if (copyLbl) copyLbl.textContent = 'Copy to Clipboard';
+  setView('recovery-code');
+}
+
+async function copyRecoveryCode() {
+  const code = document.getElementById('recovery-code-display').textContent;
+  if (!code) return;
+  try {
+    await navigator.clipboard.writeText(code);
+    const copyLbl = document.getElementById('copy-recovery-lbl');
+    if (copyLbl) copyLbl.textContent = 'Copied!';
+  } catch (e) {}
+}
+
+function acknowledgeRecoveryCode() {
+  document.getElementById('recovery-code-display').textContent = '';
+  if (recoveryCodeReturnView === 'unlocked') { setView('unlocked'); }
+  else { boot(); }
+}
+
+function showRecoveryInput() {
+  document.getElementById('recovery-input-section').classList.remove('hidden');
+  document.getElementById('use-recovery-btn').classList.add('hidden');
+  document.getElementById('recovery-code-input').focus();
+}
+
+async function submitRecoveryCode() {
+  if (recoveryAttemptInFlight) return;
+  recoveryAttemptInFlight = true;
+  const code = document.getElementById('recovery-code-input').value;
+  const result = await callApi('verify_recovery_code', code);
+  recoveryAttemptInFlight = false;
+  if (result.ok) {
+    clearLockoutCountdown();
+    document.getElementById('pin-input').value = '';
+    document.getElementById('recovery-code-input').value = '';
+    setView('unlocked');
+  } else {
+    document.getElementById('status-detail').textContent = friendlyMessage(result.message, 'Invalid recovery code.');
+    pulseError(document.getElementById('recovery-code-input'));
+  }
+}
+
+async function submitChangePin() {
+  if (changePinAttemptInFlight) return;
+  changePinAttemptInFlight = true;
+  const pin = document.getElementById('change-pin-new').value;
+  const confirm = document.getElementById('change-pin-confirm').value;
+  const result = await callApi('change_pin', pin, confirm);
+  changePinAttemptInFlight = false;
+  const msgEl = document.getElementById('change-pin-message');
+  if (result.ok) {
+    pinSetupThisSession = true;
+    document.getElementById('change-pin-new').value = '';
+    document.getElementById('change-pin-confirm').value = '';
+    conditionPinInput(document.getElementById('change-pin-new'), 'change-pin-len');
+    conditionPinInput(document.getElementById('change-pin-confirm'), 'change-confirm-len');
+    msgEl.textContent = 'PIN updated successfully.';
+    if (result.recovery_code) { showRecoveryCode(result.recovery_code, 'unlocked'); }
+  } else {
+    msgEl.textContent = result.message === 'MISMATCH' ? "PINs didn't match."
+      : result.message === 'INVALID_PIN' ? "PIN must be 4-12 digits."
+      : friendlyMessage(result.message);
+    pulseError(document.getElementById('change-pin-new'));
+    pulseError(document.getElementById('change-pin-confirm'));
+  }
+}
+
+async function loadAccessLog() {
+  const result = await callApi('get_access_log');
+  const el = document.getElementById('access-log-display');
+  if (result.ok === false) { el.textContent = 'Could not load access history.'; return; }
+  if (!result.entries || result.entries.length === 0) { el.textContent = 'No access history yet.'; return; }
+  const integrityLine = result.chain_intact ? '(integrity check: OK)' : '(integrity check: BROKEN -- an entry may have been altered)';
+  const lines = result.entries.slice().reverse().map(e => `${e.timestamp}  ${e.method}  ${e.outcome}`);
+  el.textContent = integrityLine + '\n\n' + lines.join('\n');
+}
+
+let scanPollInterval = null;
+let scanToken = 0;
+
+async function waitForPrewarmThenScan(attempt, chainToken) {
+  attempt = attempt || 0;
+  if (chainToken === undefined) chainToken = scanToken;
+  const status = await callApi('get_prewarm_status');
+  if (chainToken !== scanToken) return;
+  const ring = document.getElementById('scan-ring-container');
+  if (status && status.ready) {
+    if (ring) ring.classList.remove('orb-warming');
+    startFaceScan();
+    return;
+  }
+  if (attempt >= 0) {
+    if (ring) ring.classList.remove('orb-warming');
+    startFaceScan();
+    return;
+  }
+  if (ring) ring.classList.add('orb-warming');
+  ORB.set('warming');
+  document.getElementById('status-text-locked').textContent = 'Starting Face ID...';
+  setTimeout(() => waitForPrewarmThenScan(attempt + 1, chainToken), 300);
+}
+
+async function startFaceScan() {
+  isStandbyPaused = false;
+  const wp = document.getElementById('standby-wake-pill'); if (wp) wp.classList.add('hidden');
+  const token = ++scanToken;
+  document.getElementById('status-text-locked').textContent = 'Looking for your face...';
+  document.getElementById('status-detail').textContent = '';
+  document.getElementById('retry-scan-btn').classList.add('hidden');
+  const hudPills = document.getElementById('scan-hud-pills');
+  if (hudPills) hudPills.classList.remove('hidden');
+  const ringContainer = document.getElementById('scan-ring-container');
+  if (ringContainer) ringContainer.classList.remove('orb-warming');
+  ORB.set('idle');
+  ORB.setProgress(0, false);
+  ORB.setPose(0, 0);
+  if (scanPollInterval) { clearInterval(scanPollInterval); scanPollInterval = null; }
+  setScanScanning(false);
+
+  const result = await callApi('start_face_scan');
+  if (token !== scanToken) return;
+  if (!result || !result.ok) {
+    document.getElementById('status-text-locked').textContent =
+      result && result.message === 'BUSY' ? 'Camera busy -- try again in a moment.' : 'Could not start face scan.';
+    document.getElementById('retry-scan-btn').classList.remove('hidden');
+    return;
+  }
+  setScanScanning(true);
+  const interval = setInterval(() => {
+    if (token !== scanToken) { clearInterval(interval); return; }
+    pollScanProgress(token);
+  }, 80);
+  scanPollInterval = interval;
+}
+
+async function pollScanProgress(token) {
+  const state = await callApi('get_scan_progress');
+  if (token !== scanToken) return;
+  if (!state || state.message === 'UNEXPECTED_ERROR') {
+    clearInterval(scanPollInterval);
+    scanPollInterval = null;
+    setScanScanning(false);
+    document.getElementById('status-text-locked').textContent = 'Something went wrong -- try again.';
+    document.getElementById('retry-scan-btn').classList.remove('hidden');
+    return;
+  }
+
+  if (state.phase === 'VERIFIED_MOUNTING' && !unlockCascadePlaying) {
+    playGravityCascadeAndEnter(new Promise(resolve => {
+      const checkDone = setInterval(async () => {
+        const s2 = await callApi('get_scan_progress');
+        if (s2 && s2.done) { clearInterval(checkDone); resolve(s2.unlock_result || { ok: s2.ok, message: s2.message }); }
+      }, 60);
+    }));
+    return;
+  }
+  if (!state.done && state.recognition !== undefined) {
+    const closeness = Math.max(0, Math.min(1, Math.min(state.recognition / 0.75, state.liveness / 0.70)));
+    ORB.setProgress(closeness, state.quality < 0.4);
+    ORB.setPose(state.yaw || 0, state.pitch || 0);
+    const scanCam = document.getElementById('scan-camera-preview');
+    if (scanCam && state.frame_b64) {
+      scanCam.src = state.frame_b64;
+      scanCam.style.opacity = '0.58';
+    }
+    const detail = document.getElementById('status-detail');
+    if (detail) {
+      detail.textContent = (state.face_count === 0)
+        ? 'Center your face in the camera view'
+        : `Match ${Math.round(state.recognition * 100)}% · Liveness ${Math.round(state.liveness * 100)}%`;
+      const stLock = document.getElementById('status-text-locked');
+      if (stLock && state.face_count > 0 && state.recognition > 0) {
+        stLock.textContent = 'Verifying Face ID...';
+      }
+    }
+    const hudPills = document.getElementById('scan-hud-pills');
+    if (hudPills) {
+      hudPills.classList.remove('hidden');
+      const mPill = document.getElementById('hud-pill-match');
+      const lPill = document.getElementById('hud-pill-live');
+      const qPill = document.getElementById('hud-pill-light');
+      const recPct = Math.round(state.recognition * 100);
+      const livPct = Math.round(state.liveness * 100);
+      if (mPill) mPill.textContent = `Match ${recPct}%`;
+      const mFill = document.getElementById('bio-fill-match'); if (mFill) mFill.style.width = `${Math.min(100, recPct)}%`;
+      if (lPill) lPill.textContent = `Liveness ${livPct}%`;
+      const lFill = document.getElementById('bio-fill-live'); if (lFill) lFill.style.width = `${Math.min(100, livPct)}%`;
+      if (qPill) qPill.textContent = state.quality < 0.4 ? 'Low Light' : 'Light OK';
+    }
+  }
+
+  if (state.done) {
+    clearInterval(scanPollInterval);
+    scanPollInterval = null;
+    setScanScanning(false);
+    const hudPills = document.getElementById('scan-hud-pills');
+    if (hudPills) hudPills.classList.add('hidden');
+    const lockedView = document.getElementById('view-locked');
+    if (!lockedView || lockedView.classList.contains('hidden')) return;
+    const { ok, message, unlock_result } = state;
+    if (ok && unlock_result && unlock_result.ok) { playUnlockChoreographyAndEnter(); }
+    else if (ok && unlock_result && !unlock_result.ok) {
+      ORB.set('error');
+      document.getElementById('status-text-locked').textContent = 'Face matched, but unlock failed.';
+      document.getElementById('status-detail').textContent = friendlyMessage(unlock_result.message);
+      document.getElementById('retry-scan-btn').classList.remove('hidden');
+      showPinFallback();
+    } else {
+      ORB.set('error');
+      const wp2 = document.getElementById('standby-wake-pill'); if (wp2) wp2.classList.remove('hidden');
+      document.getElementById('status-text-locked').textContent = message === 'TIMEOUT' ? "Didn't find a match -- try your PIN."
+        : (message || '').indexOf('TEMPLATES_CORRUPT') === 0 ? 'Face templates look corrupted or tampered -- unlock with your PIN, then re-enroll from Settings.'
+        : friendlyMessage(message);
+      document.getElementById('retry-scan-btn').classList.remove('hidden');
+      showPinFallback();
+    }
+  }
+}
+
+function showPinFallback() {
+  scanToken++;
+  callApi('stop_face_scan');
+  if (scanPollInterval) { clearInterval(scanPollInterval); scanPollInterval = null; }
+  const hudPills = document.getElementById('scan-hud-pills');
+  if (hudPills) hudPills.classList.add('hidden');
+  const rc = document.getElementById('scan-ring-container');
+  if (rc) rc.classList.remove('orb-warming');
+  ORB.set('idle');
+  const st = document.getElementById('status-text-locked');
+  if (st && st.textContent.indexOf('Starting') === 0) st.textContent = 'Enter your PIN to unlock';
+  const backBtn = document.getElementById('back-to-face-btn');
+  if (backBtn) backBtn.classList.toggle('hidden', !faceEnrolledState);
+  const enrollNowBtn = document.getElementById('first-time-enroll-btn');
+  if (enrollNowBtn) enrollNowBtn.classList.toggle('hidden', faceEnrolledState || !pinSetupThisSession);
+  document.getElementById('pin-fallback').classList.remove('hidden');
+  document.getElementById('use-pin-btn').classList.add('hidden');
+  const retryBtn = document.getElementById('retry-scan-btn');
+  if (retryBtn) retryBtn.classList.add('hidden');
+  setScanScanning(false);
+  const pinIn = document.getElementById('pin-input');
+  if (pinIn && !pinIn.disabled) pinIn.focus();
+}
+
+function showFaceScan() {
+  document.getElementById('pin-fallback').classList.add('hidden');
+  document.getElementById('use-pin-btn').classList.remove('hidden');
+  document.getElementById('pin-input').value = '';
+  startFaceScan();
+}
+
+async function submitPin() {
+  if (pinAttemptInFlight) return;
+  const pinIn = document.getElementById('pin-input');
+  const btn = document.getElementById('unlock-pin-submit-btn');
+  if (!pinIn || pinIn.disabled) return;
+  pinAttemptInFlight = true;
+  const pin = pinIn.value;
+  const fastRes = await callApi('verify_pin_fast', pin);
+  if (fastRes && fastRes.ok) {
+    clearLockoutCountdown();
+    pinIn.value = '';
+    pinAttemptInFlight = false;
+    // Start 'Painting Dropping from a Wall' cascade immediately while V:\ mounts in parallel!
+    playGravityCascadeAndEnter(callApi('mount_authenticated_vault'));
+    return;
+  }
+  pinAttemptInFlight = false;
+  if (btn) { btn.disabled = false; btn.textContent = 'Unlock Vault'; }
+  const result = fastRes || { ok: false, message: 'ERROR' };
+  if (false) {
+    clearLockoutCountdown();
+    pinIn.value = '';
+    playUnlockChoreographyAndEnter();
+  } else {
+    document.getElementById('status-text-locked').textContent =
+      result.message === 'STATE_CORRUPT' ? 'PIN state looks corrupted or tampered -- use your recovery code.'
+      : friendlyMessage(result.message);
+    pinIn.value = '';
+    conditionPinInput(pinIn, 'unlock-pin-len');
+    pulseError(pinIn);
+  }
+}
+
+
+
+let isStandbyPaused = false;
+
+function enterStandbyMode() {
+  isStandbyPaused = true;
+  scanToken++;
+  callApi('stop_face_scan');
+  callApi('offload_ram_now', false);
+  if (scanPollInterval) { clearInterval(scanPollInterval); scanPollInterval = null; }
+  setView('locked');
+  setScanScanning(false);
+  ORB.set('idle');
+  ORB.setProgress(0, false);
+  const hudPills = document.getElementById('scan-hud-pills');
+  if (hudPills) hudPills.classList.add('hidden');
+  const pinFb = document.getElementById('pin-fallback');
+  if (pinFb) pinFb.classList.add('hidden');
+  const usePinBtn = document.getElementById('use-pin-btn');
+  if (usePinBtn) usePinBtn.classList.remove('hidden');
+  const retryBtn = document.getElementById('retry-scan-btn');
+  if (retryBtn) retryBtn.classList.add('hidden');
+  const wakePill = document.getElementById('standby-wake-pill');
+  if (wakePill) wakePill.classList.remove('hidden');
+  const st = document.getElementById('status-text-locked');
+  if (st) st.textContent = 'Vault in Standby Mode';
+  const dt = document.getElementById('status-detail');
+  if (dt) dt.textContent = 'Camera paused · Biometric guard on standby';
+}
+
+function wakeFromStandbyAndScan() {
+  isStandbyPaused = false;
+  const wakePill = document.getElementById('standby-wake-pill');
+  if (wakePill) wakePill.classList.add('hidden');
+  const pinFb = document.getElementById('pin-fallback');
+  if (pinFb) pinFb.classList.add('hidden');
+  const usePinBtn = document.getElementById('use-pin-btn');
+  if (usePinBtn) usePinBtn.classList.remove('hidden');
+  startFaceScan();
+}
+
+// Global Spacebar shortcut on Lock Screen to wake from Standby or re-trigger Face ID scan
+document.addEventListener('keydown', (e) => {
+  if (e.code !== 'Space' && e.key !== ' ') return;
+  const tag = (document.activeElement && document.activeElement.tagName || '').toUpperCase();
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  const lockedView = document.getElementById('view-locked');
+  if (!lockedView || lockedView.classList.contains('hidden')) return;
+  if (unlockCascadePlaying || lockInFlight) return;
+  e.preventDefault();
+  wakeFromStandbyAndScan();
+});
+
+async function saveDuressPin() {
+  const inp = document.getElementById('duress-pin-input');
+  const msg = document.getElementById('sec-command-msg');
+  const val = inp ? inp.value.trim() : '';
+  const res = await callApi('set_duress_pin', val);
+  if (res && res.ok) {
+    if (inp) inp.value = '';
+    if (msg) msg.textContent = res.enabled
+      ? '🚨 Duress Panic PIN armed (DPAPI encrypted).'
+      : 'Duress Panic PIN cleared.';
+  } else {
+    if (msg) msg.textContent = 'Panic PIN must be 4–12 digits (or empty to clear).';
+  }
+}
+
+async function loadIntruderGallery() {
+  const box = document.getElementById('intruder-gallery-box');
+  if (!box) return;
+  const res = await callApi('get_intruder_mugshots');
+  if (!res || !res.ok || !Array.isArray(res.mugshots) || res.mugshots.length === 0) {
+    box.textContent = 'No unauthorized intrusion attempts recorded.';
+    return;
+  }
+  box.innerHTML = '';
+  const grid = document.createElement('div');
+  grid.className = 'intruder-grid';
+  res.mugshots.slice(0, 3).forEach(shot => {
+    const card = document.createElement('div');
+    card.className = 'intruder-card';
+    const img = document.createElement('img');
+    img.src = shot.image_b64;
+    img.alt = 'Intruder';
+    const meta = document.createElement('div');
+    meta.className = 'intruder-meta';
+    meta.textContent = `${shot.reason}\n${(shot.timestamp || '').slice(11)}`;
+    card.appendChild(img);
+    card.appendChild(meta);
+    grid.appendChild(card);
+  });
+  box.appendChild(grid);
+}
+
+async function clearIntruderGallery() {
+  await callApi('clear_intruder_mugshots');
+  loadIntruderGallery();
+}
+
+
+function openNewVaultSetupWizard() {
+  setView('no-drive');
+  const box = document.getElementById('no-drive-provision-box');
+  if (box) box.classList.remove('hidden');
+  const desc = document.getElementById('no-drive-desc');
+  if (desc) desc.textContent = 'Select any drive below to create a brand-new BitLocker XTS-AES-256 Vault or link an existing VHDX container.';
+}
+
+function toggleArchInfoModal(show) {
+  const m = document.getElementById('arch-info-modal');
+  if (m) m.classList.toggle('open', !!show);
+}
+
+async function toggleCaptureShieldSwitch() {
+  const sw = document.getElementById('capture-shield-switch');
+  const nextState = !(sw && sw.classList.contains('on'));
+  const res = await callApi('toggle_capture_shield', nextState);
+  if (res && res.ok && sw) {
+    sw.classList.toggle('on', !!res.enabled);
+    sw.setAttribute('aria-checked', String(!!res.enabled));
+    const msg = document.getElementById('sec-command-msg');
+    if (msg) msg.textContent = res.enabled
+      ? 'Anti-Screenshot & Stream Shield ARMED (window invisible to capture).'
+      : 'Anti-Screenshot Shield disabled (screenshots allowed).';
+  }
+}
+
+async function triggerDecoyCamouflage() {
+  const msg = document.getElementById('sec-command-msg') || document.getElementById('lock-message');
+  if (msg) msg.textContent = 'Sealing V:\\ & launching Kushal Studios Decoy Hub...';
+  await callApi('launch_decoy_camouflage');
+}
+
+async function refreshSecurityPosture(showAuditToast) {
+  loadIntruderGallery();
+  const res = await callApi('get_security_posture');
+  if (!res || !res.ok) return;
+  const sc = document.getElementById('sec-posture-score');
+  if (sc) sc.textContent = `${res.score}%`;
+  const faceLbl = document.getElementById('sec-face-lbl');
+  if (faceLbl) faceLbl.textContent = res.face_angles ? `Face ID (${res.face_angles} Angles)` : 'PIN Guard Only';
+  const chainLbl = document.getElementById('sec-chain-lbl');
+  if (chainLbl) chainLbl.textContent = res.chain_intact ? 'Audit Chain Intact' : 'Chain Alert';
+  const uEl = document.getElementById('sec-stat-unlocks');
+  if (uEl) uEl.textContent = String(res.ok_unlocks || 0);
+  const bEl = document.getElementById('sec-stat-blocked');
+  if (bEl) bEl.textContent = String(res.blocked_attempts || 0);
+  const iEl = document.getElementById('sec-stat-idle');
+  if (iEl) iEl.textContent = `${res.auto_lock_minutes || 5}m`;
+  const sw = document.getElementById('capture-shield-switch');
+  if (sw) sw.classList.toggle('on', !!res.capture_shield);
+  if (showAuditToast) {
+    const msg = document.getElementById('sec-command-msg');
+    if (msg) {
+      msg.textContent = res.chain_intact && res.models_intact
+        ? '✓ Deep Audit Passed: DPAPI, Argon2id, ONNX SHA-256 & HMAC Chain Verified!'
+        : '⚠️ Audit found an anomaly — check Settings > Audit Log.';
+    }
+  }
+}
+
+let unlockCascadePlaying = false;
+
+function resetLockedCardCascadeClasses() {
+  const lockedCard = document.querySelector('#view-locked .glass-card');
+  if (lockedCard) {
+    lockedCard.classList.remove('card-frame-dropping');
+    lockedCard.querySelectorAll('.gravity-drop-l, .gravity-drop-r').forEach(el => {
+      el.classList.remove('gravity-drop-l', 'gravity-drop-r');
+      el.style.animationDelay = '';
+    });
+  }
+}
+
+function playGravityCascadeAndEnter(mountPromise) {
+  if (unlockCascadePlaying) return;
+  unlockCascadePlaying = true;
+  ORB.set('success');
+
+  const badge = document.getElementById('lock-header-badge');
+  if (badge) badge.classList.add('padlock-unlocked');
+  const st = document.getElementById('status-text-locked');
+  if (st) st.textContent = 'Identity Verified — Opening Vault...';
+
+  // Grab all visible elements inside #view-locked and drop them like paintings detaching from a wall
+  const lockedCard = document.querySelector('#view-locked .glass-card');
+  if (lockedCard) {
+    const parts = Array.from(lockedCard.children).filter(el => !el.classList.contains('hidden'));
+    // Reverse order (bottom-up detachment) with alternating slight tilt & 45ms stagger
+    parts.slice().reverse().forEach((el, idx) => {
+      el.style.animationDelay = `${idx * 75}ms`;
+      el.classList.add(idx % 2 === 0 ? 'gravity-drop-l' : 'gravity-drop-r');
+    });
+    lockedCard.classList.add('card-frame-dropping');
+  }
+
+  const minAnimWait = new Promise(r => setTimeout(r, 1080));
+  const mntWait = mountPromise || Promise.resolve({ ok: true });
+
+  Promise.all([minAnimWait, mntWait]).then(([_, mntRes]) => {
+    resetLockedCardCascadeClasses();
+    if (badge) badge.classList.remove('padlock-unlocked');
+    unlockCascadePlaying = false;
+
+    if (mntRes && mntRes.ok === false) {
+      ORB.set('error');
+      if (st) st.textContent = 'Verified, but volume mount failed.';
+      const dt = document.getElementById('status-detail');
+      if (dt) dt.textContent = friendlyMessage(mntRes.message);
+      showPinFallback();
+      return;
+    }
+
+    // Switch to #view-unlocked and play Ethereal Defade Materialization
+    setView('unlocked');
+    const dashCard = document.querySelector('#view-unlocked .glass-card');
+    if (dashCard) {
+      dashCard.classList.remove('ethereal-defade-in');
+      void dashCard.offsetWidth;
+      dashCard.classList.add('ethereal-defade-in');
+      const items = dashCard.querySelectorAll('.top-header-bar, .metric-tiles, .storage-card, .vault-contents-card, .quick-actions-grid, .cta-stack');
+      items.forEach((item, i) => {
+        item.classList.remove('ethereal-stagger-item');
+        void item.offsetWidth;
+        item.style.animationDelay = `${i * 85}ms`;
+        item.classList.add('ethereal-stagger-item');
+      });
+    }
+  });
+}
+
+function playUnlockChoreographyAndEnter(mountPromise) {
+  playGravityCascadeAndEnter(mountPromise);
+}
+function _legacyUnlockUnused() {
+  ORB.set('success');
+  const badge = document.getElementById('lock-header-badge');
+  if (badge) badge.classList.add('padlock-unlocked');
+  const ringC = document.getElementById('scan-ring-container');
+  if (ringC) ringC.classList.add('unlock-burst');
+  const st = document.getElementById('status-text-locked');
+  if (st) st.textContent = 'Identity Verified — Vault Unlocked';
+  setTimeout(() => {
+    if (badge) badge.classList.remove('padlock-unlocked');
+    if (ringC) ringC.classList.remove('unlock-burst');
+    setView('unlocked');
+  }, 220);
+}
+
+let lockInFlight = false;
+async function lockVault(exitAppAfter) {
+  if (lockInFlight) return;
+  lockInFlight = true;
+  if (exitAppAfter === undefined) exitAppAfter = false;
+
+  const overlay = document.getElementById('motion-transition-overlay');
+  const s1 = document.getElementById('tstep-1');
+  const s2 = document.getElementById('tstep-2');
+  const s3 = document.getElementById('tstep-3');
+  const titleEl = document.getElementById('transition-title');
+  if (s1) { s1.className = 't-step active'; s1.innerHTML = '<span>●</span><span>Locking BitLocker XTS-AES-256 volume...</span>'; }
+  if (s2) { s2.className = 't-step'; s2.innerHTML = '<span>○</span><span>Cloaking VHDX container (+h +s)...</span>'; }
+  if (s3) { s3.className = 't-step'; s3.innerHTML = '<span>○</span><span>Dismounting virtual drive V:\...</span>'; }
+  if (titleEl) titleEl.textContent = 'Sealing Vault...';
+  if (overlay) overlay.classList.add('active');
+
+  setTimeout(() => {
+    if (s1) { s1.className = 't-step done'; s1.innerHTML = '<span>✓</span><span>BitLocker XTS-AES-256 keys purged</span>'; }
+    if (s2) { s2.className = 't-step active'; s2.innerHTML = '<span>●</span><span>Cloaking VHDX container (+h +s)...</span>'; }
+  }, 220);
+
+  await callApi('scrub_clipboard');
+  const result = await callApi('lock_vault');
+  const msgEl = document.getElementById('lock-message');
+
+  if (result && result.ok) {
+    if (s2) { s2.className = 't-step done'; s2.innerHTML = '<span>✓</span><span>VHDX container cloaked (+h +s)</span>'; }
+    if (s3) { s3.className = 't-step done'; s3.innerHTML = '<span>✓</span><span>Virtual drive V:\ dismounted</span>'; }
+    if (titleEl) titleEl.textContent = 'Vault Sealed';
+    if (msgEl) msgEl.textContent = '';
+    document.getElementById('pin-input').value = '';
+    document.getElementById('recovery-code-display').textContent = '';
+    ORB.stop();
+
+    setTimeout(() => {
+      if (overlay) overlay.classList.remove('active');
+      lockInFlight = false;
+      if (exitAppAfter) {
+        callApi('quit_app');
+        setTimeout(() => { try { window.close(); } catch (e) {} }, 180);
+      } else {
+        enterStandbyMode();
+      }
+    }, 220);
+  } else {
+    if (overlay) overlay.classList.remove('active');
+    lockInFlight = false;
+    if (msgEl) msgEl.textContent = friendlyMessage(result ? result.message : '', 'Lock failed.');
+  }
+}
+
+/* ================= 60 FPS rAF Spring Interpolator (ENROLL_ANIM) ================= */
+let enrollPollInterval = null;
+let enrollReturnView = 'unlocked';
+
+const ENROLL_ANIM = (() => {
+  let targetYaw = 0, targetPitch = 0;
+  let currentYaw = 0, currentPitch = 0;
+  let raf = null;
+
+  function tick() {
+    currentYaw += (targetYaw - currentYaw) * 0.18;
+    currentPitch += (targetPitch - currentPitch) * 0.18;
+
+    const dial3d = document.getElementById('enroll-dial-3d');
+    if (dial3d) {
+      dial3d.style.transform = `rotateY(${currentYaw * 0.45}deg) rotateX(${-currentPitch * 0.45}deg)`;
+    }
+    const cursor = document.getElementById('enroll-cursor');
+    if (cursor) {
+      cursor.style.transform = `translate(${currentYaw * 1.8}px, ${-currentPitch * 1.8}px)`;
+    }
+
+    if (Math.abs(targetYaw - currentYaw) > 0.05 || Math.abs(targetPitch - currentPitch) > 0.05) {
+      raf = requestAnimationFrame(tick);
+    } else {
+      raf = null;
+    }
+  }
+
+  return {
+    setTarget(yaw, pitch) {
+      targetYaw = Math.max(-28, Math.min(28, yaw || 0));
+      targetPitch = Math.max(-28, Math.min(28, pitch || 0));
+      if (raf === null) raf = requestAnimationFrame(tick);
+    },
+    reset() {
+      if (raf !== null) { cancelAnimationFrame(raf); raf = null; }
+      targetYaw = 0; targetPitch = 0; currentYaw = 0; currentPitch = 0;
+      const dial3d = document.getElementById('enroll-dial-3d');
+      if (dial3d) dial3d.style.transform = 'rotateY(0deg) rotateX(0deg)';
+      const cursor = document.getElementById('enroll-cursor');
+      if (cursor) cursor.style.transform = 'translate(0px, 0px)';
+    }
+  };
+})();
+
+function initEnrollDial() {
+  const g = document.getElementById('dial-ticks-group');
+  if (!g || g.children.length === 64) return;
+  g.innerHTML = '';
+  const cx = 100, cy = 100, rInner = 82, rOuter = 94;
+  for (let i = 0; i < 64; i++) {
+    const angle = (i * 360 / 64) * Math.PI / 180;
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', (cx + rInner * Math.cos(angle)).toFixed(2));
+    line.setAttribute('y1', (cy + rInner * Math.sin(angle)).toFixed(2));
+    line.setAttribute('x2', (cx + rOuter * Math.cos(angle)).toFixed(2));
+    line.setAttribute('y2', (cy + rOuter * Math.sin(angle)).toFixed(2));
+    line.setAttribute('class', 'dial-tick');
+    line.id = `dial-tick-${i}`;
+    g.appendChild(line);
+  }
+}
+
+function resetEnrollUI() {
+  initEnrollDial();
+  ENROLL_ANIM.reset();
+  for (let i = 0; i < 64; i++) {
+    const tick = document.getElementById(`dial-tick-${i}`);
+    if (tick) tick.classList.remove('lit', 'active-zone');
+  }
+  const previewImg = document.getElementById('enroll-camera-preview');
+  if (previewImg) { previewImg.classList.remove('visible'); previewImg.removeAttribute('src'); }
+  const cvs = document.getElementById('enroll-mesh-canvas');
+  if (cvs) cvs.getContext('2d').clearRect(0, 0, cvs.width, cvs.height);
+  const bloom = document.getElementById('enroll-check-bloom');
+  if (bloom) bloom.classList.remove('visible');
+  const fill = document.getElementById('enroll-progress-fill');
+  if (fill) fill.style.width = '0%';
+  const pct = document.getElementById('enroll-pct-text');
+  if (pct) pct.textContent = '0%';
+  const hint = document.getElementById('enroll-hint');
+  if (hint) hint.textContent = 'Position your face in the frame';
+  const qEl = document.getElementById('enroll-quality-text');
+  if (qEl) qEl.textContent = 'Move your head slowly in a circle';
+  const cursor = document.getElementById('enroll-cursor');
+  if (cursor) { cursor.style.transform = 'translate(0px, 0px)'; cursor.style.opacity = '1'; }
+  ['center', 'left', 'right', 'up', 'down', 'up_left', 'up_right', 'down_left', 'down_right'].forEach(b => {
+    const chip = document.getElementById(`chip-${b}`);
+    if (chip) {
+      chip.classList.remove('target', 'captured');
+      const st = chip.querySelector('.chip-status');
+      if (st) st.textContent = '•';
+    }
+  });
+}
+
+function drawTrueDepthMesh(kpsNorm) {
+  const cvs = document.getElementById('enroll-mesh-canvas');
+  if (!cvs) return;
+  const c = cvs.getContext('2d');
+  const W = cvs.width, H = cvs.height;
+  c.clearRect(0, 0, W, H);
+  if (Array.isArray(kpsNorm) && kpsNorm.length >= 5) {
+    const pts = kpsNorm.map(p => [p[0] * W, p[1] * H]);
+    const [le, re, nose, lm, rm] = pts;
+    const edges = [[le, re], [le, nose], [re, nose], [nose, lm], [nose, rm], [lm, rm], [le, lm], [re, rm]];
+    c.strokeStyle = 'rgba(10, 132, 255, 0.58)';
+    c.lineWidth = 1.15;
+    c.beginPath();
+    edges.forEach(([a, b]) => { c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); });
+    c.stroke();
+    pts.forEach((pt, idx) => {
+      c.fillStyle = idx === 2 ? '#30D158' : '#5AC8FA';
+      c.beginPath();
+      c.arc(pt[0], pt[1], idx === 2 ? 3.0 : 2.1, 0, Math.PI * 2);
+      c.fill();
+    });
+  }
+}
+
+function applyEnrollTelemetry(prog) {
+  if (!prog) return;
+  const hintEl = document.getElementById('enroll-hint');
+  if (hintEl && prog.hint) hintEl.textContent = prog.hint;
+
+  const pct = prog.progress_pct || 0;
+  const fill = document.getElementById('enroll-progress-fill');
+  if (fill) fill.style.width = pct + '%';
+  const pctEl = document.getElementById('enroll-pct-text');
+  if (pctEl) pctEl.textContent = pct + '%';
+
+  if (Array.isArray(prog.lit_segments) && prog.lit_segments.length === 64) {
+    for (let i = 0; i < 64; i++) {
+      const tick = document.getElementById(`dial-tick-${i}`);
+      if (!tick) continue;
+      const seg = prog.lit_segments[i] || 0;
+      if (seg >= 2) { tick.classList.add('lit'); tick.classList.remove('active-zone'); }
+      else if (seg === 1) { tick.classList.add('active-zone'); tick.classList.remove('lit'); }
+      else { tick.classList.remove('lit', 'active-zone'); }
+    }
+  }
+
+  ENROLL_ANIM.setTarget(prog.current_yaw || 0, prog.current_pitch || 0);
+  const previewImg = document.getElementById('enroll-camera-preview');
+  const cursorEl = document.getElementById('enroll-cursor');
+  if (previewImg && prog.frame_b64) {
+    previewImg.src = prog.frame_b64;
+    previewImg.classList.add('visible');
+    if (cursorEl) cursorEl.style.opacity = '0';
+  }
+  drawTrueDepthMesh(prog.kps_norm);
+
+  const buckets = ['center', 'left', 'right', 'up', 'down', 'up_left', 'up_right', 'down_left', 'down_right'];
+  const captured = (prog.captured_poses || []).map(p => p.toLowerCase());
+  const target = (prog.pose_target || 'center').toLowerCase();
+  buckets.forEach(b => {
+    const chip = document.getElementById(`chip-${b}`);
+    if (chip) {
+      const isCap = captured.includes(b);
+      const isTar = (b === target) && !isCap;
+      chip.classList.toggle('captured', isCap);
+      chip.classList.toggle('target', isTar);
+      const statusSpan = chip.querySelector('.chip-status');
+      if (statusSpan) statusSpan.textContent = isCap ? '✓' : (isTar ? '●' : '•');
+    }
+  });
+
+  const qEl = document.getElementById('enroll-quality-text');
+  if (qEl) {
+    qEl.textContent = prog.quality >= 0.65 ? 'Good lighting' : (prog.quality >= 0.40 ? 'Move head slowly in a circle' : 'Aligning...');
+  }
+
+  const bloom = document.getElementById('enroll-check-bloom');
+  if (prog.phase === 'COMPLETED' || pct >= 100) {
+    if (bloom) bloom.classList.add('visible');
+    if (cursorEl) cursorEl.style.opacity = '0';
+  }
+}
+
+async function pollEnrollProgress() {
+  if (!enrollInFlight) return;
+  const prog = await callApi('get_enroll_progress');
+  if (!prog || !enrollInFlight) return;
+  applyEnrollTelemetry(prog);
+}
+
+async function reEnrollFace(returnView) {
+  if (enrollInFlight) return;
+  enrollInFlight = true;
+  enrollReturnView = returnView || 'unlocked';
+  resetEnrollUI();
+  setView('enroll');
+  ENROLL_ANIM.setTarget(0, 0);
+
+  enrollPollInterval = setInterval(pollEnrollProgress, 40);
+  const result = await callApi('enroll_face');
+  if (enrollPollInterval) { clearInterval(enrollPollInterval); enrollPollInterval = null; }
+  enrollInFlight = false;
+  ENROLL_ANIM.reset();
+
+  if (result && result.ok) {
+    faceEnrolledState = true;
+    applyEnrollTelemetry({
+      phase: 'COMPLETED',
+      progress_pct: 100,
+      lit_segments: new Array(64).fill(2),
+      captured_poses: ['CENTER', 'LEFT', 'RIGHT', 'UP', 'DOWN'],
+      pose_target: 'DONE',
+      hint: 'Face ID setup complete!',
+      quality: 0.95,
+    });
+    setTimeout(() => {
+      if (enrollReturnView === 'unlocked') {
+        setView('unlocked');
+        const msg = document.getElementById('settings-message');
+        if (msg) msg.textContent = '360° Multi-Angle Face ID templates enrolled!';
+      } else {
+        boot();
+      }
+    }, 950);
+  } else {
+    if (enrollReturnView === 'unlocked') {
+      setView('unlocked');
+      const msg = document.getElementById('settings-message');
+      if (msg) {
+        msg.textContent = result && result.message === 'BUSY'
+          ? 'Camera busy -- try again in a moment.'
+          : friendlyMessage(result ? result.message : '');
+      }
+    } else {
+      boot();
+    }
+  }
+}
+
+function cancelEnrollment() {
+  if (enrollPollInterval) { clearInterval(enrollPollInterval); enrollPollInterval = null; }
+  enrollInFlight = false;
+  ENROLL_ANIM.reset();
+  callApi('stop_face_scan');
+  if (enrollReturnView === 'unlocked') {
+    setView('unlocked');
+    const msg = document.getElementById('settings-message');
+    if (msg) msg.textContent = 'Enrollment canceled.';
+  } else {
+    boot();
+  }
+}
+
+async function generateRecoveryCode(forceRotate) {
+  const result = await callApi('generate_recovery_code', !!forceRotate);
+  const msgEl = document.getElementById('generate-recovery-message');
+  if (result.ok) {
+    msgEl.textContent = '';
+    showRecoveryCode(result.recovery_code, 'unlocked');
+  } else if (result.message === 'ALREADY_EXISTS') {
+    msgEl.textContent = "Recovery key is active. Click 'Rotate' to issue a new key.";
+  } else {
+    msgEl.textContent = friendlyMessage(result.message);
+  }
+}
+
+
+async function shredAndImportFile() {
+  const msg = document.getElementById('lock-message');
+  if (msg) msg.textContent = 'Select a file to import into V:\\ and shred original...';
+  const res = await callApi('import_and_shred_file');
+  if (res && res.ok) {
+    if (msg) msg.textContent = `Imported '${res.filename}' to V:\\ & shredded original!`;
+    refreshVaultTelemetry();
+  } else if (res && res.message === 'CANCELED') {
+    if (msg) msg.textContent = '';
+  } else {
+    if (msg) msg.textContent = friendlyMessage(res ? res.message : '', 'Import failed.');
+  }
+}
+
+async function scrubClipboardNow() {
+  const msg = document.getElementById('lock-message');
+  const res = await callApi('scrub_forensic_traces');
+  if (msg) msg.textContent = (res && res.ok) ? `Clipboard & Windows Recent traces scrubbed (${res.removed_lnks || 0} .lnk purged).` : 'Could not scrub traces.';
+  setTimeout(() => { if (msg && msg.textContent.indexOf('clipboard') !== -1) msg.textContent = ''; }, 2500);
+}
+
+async function runHealthCheckNow() {
+  const msg = document.getElementById('lock-message');
+  if (msg) msg.textContent = 'Running cryptographic & biometric integrity audit...';
+  const res = await callApi('run_security_health_check');
+  if (res && res.ok && res.checks) {
+    const c = res.checks;
+    const allOk = c.dpapi_secret && c.pin_state_ok && c.models_intact && c.audit_chain_intact;
+    if (msg) {
+      msg.style.color = allOk ? 'var(--success)' : 'var(--warning)';
+      msg.textContent = allOk
+        ? `✓ All Guards Intact (DPAPI · Argon2id · ${c.face_templates_count} Face Angles · Audit Chain OK)`
+        : '⚠️ Integrity warning — check Settings > Audit Log.';
+    }
+  }
+}
+
+async function refreshVaultContentsCard() {
+  const res = await callApi('get_vault_contents_summary');
+  if (!res || !res.ok) return;
+  const badge = document.getElementById('vault-files-count-badge');
+  const listEl = document.getElementById('vault-recent-files-list');
+  if (badge) badge.textContent = `${res.files || 0} files · ${res.folders || 0} folders`;
+  if (listEl) {
+    if (Array.isArray(res.recent) && res.recent.length > 0) {
+      listEl.innerHTML = '';
+      res.recent.slice(0, 3).forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'recent-file-row';
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = item.name;
+        const sizeSpan = document.createElement('span');
+        sizeSpan.className = 'mono';
+        sizeSpan.textContent = `${item.size_kb} KB`;
+        row.appendChild(nameSpan);
+        row.appendChild(sizeSpan);
+        listEl.appendChild(row);
+      });
+    } else {
+      listEl.textContent = 'Vault mounted at V:\\ — drop files or use Shred & Import.';
+    }
+  }
+}
+
+async function openExplorer() {
+  const msgEl = document.getElementById('lock-message');
+  if (msgEl) msgEl.textContent = 'Opening V:\\ in File Explorer...';
+  const result = await callApi('open_explorer');
+  if (result && result.ok) {
+    if (msgEl) setTimeout(() => { msgEl.textContent = ''; }, 1500);
+  } else {
+    if (msgEl) msgEl.textContent = friendlyMessage(result ? result.message : '', 'Could not open Explorer.');
+  }
+}
+
+/* ---------- Ambient Header ThinkingOrb (18px 'working' state) ---------- */
+(function initAmbientHeaderOrb() {
+  const c = document.getElementById('ambient-sidebar-orb');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  c.width = 18 * dpr; c.height = 18 * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  let t = 0;
+  function step() {
+    if (isUnlockedViewActive()) {
+      t += 0.045;
+      ctx.clearRect(0, 0, 18, 18);
+      for (let i = 0; i < 14; i++) {
+        const a = (i / 14) * Math.PI * 2 + t * (i % 2 ? 1.1 : -0.8);
+        const r = 5.2 + Math.sin(t * 2 + i) * 1.4;
+        const x = 9 + Math.cos(a) * r;
+        const y = 9 + Math.sin(a) * r * 0.72;
+        ctx.fillStyle = i % 3 === 0 ? '#28CD41' : '#0071E3';
+        ctx.beginPath(); ctx.arc(x, y, 1.15, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+})();
+
+let initialBootTriggered = false;
+function initBridge() {
+  if (initialBootTriggered) return;
+  if (window.pywebview && window.pywebview.api) {
+    initialBootTriggered = true;
+    boot();
+  } else {
+    window.addEventListener('pywebviewready', () => {
+      if (!initialBootTriggered) {
+        initialBootTriggered = true;
+        boot();
+      }
+    });
+    setTimeout(() => {
+      if (!initialBootTriggered) {
+        initialBootTriggered = true;
+        boot();
+      }
+    }, 350);
+  }
+}
+
+if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initBridge); }
+else { initBridge(); }
+</script>
+</body>
+</html>
