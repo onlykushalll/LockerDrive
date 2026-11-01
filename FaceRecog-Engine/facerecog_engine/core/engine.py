@@ -222,7 +222,7 @@ class FaceSecurityEngine:
             
         liveness_passed = liveness_score >= self.config.liveness_threshold
 
-        # 10. Recognition check
+        # 10. Recognition check with Automatic Borderline Flip-TTA Rescue
         recognition_score = 0.0
         primary_user_present = False
         matched_user_id = None
@@ -234,6 +234,21 @@ class FaceSecurityEngine:
                 matched_user_id, recognition_score = self._recognizer.match_face(
                     embedding, self._reference_templates
                 )
+                # If score is in the side-shadow borderline band [0.64 .. threshold],
+                # run Horizontal Flip-TTA once to cancel asymmetric lighting shadows!
+                if (
+                    0.64 <= recognition_score < self.config.recognition_threshold
+                    and hasattr(self._recognizer, "get_embedding_tta")
+                ):
+                    tta_emb = self._recognizer.get_embedding_tta(enhanced, primary_face)
+                    tta_uid, tta_score = self._recognizer.match_face(
+                        tta_emb, self._reference_templates
+                    )
+                    if tta_score > recognition_score:
+                        embedding = tta_emb
+                        matched_user_id = tta_uid
+                        recognition_score = tta_score
+
                 if recognition_score >= self.config.recognition_threshold:
                     primary_user_present = True
         except Exception as e:
