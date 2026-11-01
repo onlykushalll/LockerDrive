@@ -37,6 +37,6 @@ LockerDrive creates and manages:
 ## 4. Contact
 
 For inquiries regarding LockerDrive's privacy guarantees, please open an issue on our GitHub repository:
-https://github.com/onlykushalll/LockerDrive
+the project repository
 
 

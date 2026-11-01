@@ -4,7 +4,7 @@ directly into https://github.com/onlykushalll/Utils/tree/main/~FaceRecog-Engine~
 so you can clone/pull it into any project anytime.
 #>
 param(
-    [string]$UtilsRepoUrl = "https://github.com/onlykushalll/Utils.git",
+    [string]$UtilsRepoUrl = "<remote-url>",
     [string]$CommitMessage = "feat(FaceRecog-Engine): upgrade to v2.0 (9-angle 3D burst enrollment, outlier pruning, Python 3.14 attention/rPPG, simsimd bypass, TemplateStore)"
 )
 

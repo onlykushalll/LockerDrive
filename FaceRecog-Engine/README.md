@@ -40,7 +40,7 @@
 ### 1. Clone from `onlykushalll/Utils` (Sparse Checkout of `~FaceRecog-Engine~` Only)
 
 ```powershell
-git clone --depth 1 --filter=blob:none --sparse https://github.com/onlykushalll/Utils.git temp_utils
+git clone --depth 1 --filter=blob:none --sparse <repository-url> temp_utils
 cd temp_utils
 git sparse-checkout set "~FaceRecog-Engine~"
 Move-Item "~FaceRecog-Engine~" ..\FaceRecog-Engine

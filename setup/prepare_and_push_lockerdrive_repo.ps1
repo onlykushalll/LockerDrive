@@ -1,6 +1,6 @@
 <#
 prepare_and_push_lockerdrive_repo.ps1 -- Final Production Audit, Cleanup & Git Force-Push
-Target Repository: https://github.com/onlykushalll/LockerDrive.git
+Target Repository: <remote-url>
 
 What this script does:
   1. Removes all temporary/one-off upgrade scripts, logs, build/ caches, and archive/ folders.
@@ -11,7 +11,7 @@ What this script does:
   5. Creates a clean, bloat-free commit on `main` and force-pushes to origin.
 #>
 param(
-    [string]$RemoteUrl = "https://github.com/onlykushalll/LockerDrive.git",
+    [string]$RemoteUrl = "<remote-url>",
     [string]$CommitMessage = "feat(v18.0): production Chameleon Kushal Studios / LockerDrive Vault suite (Pure-ONNX 9-angle Face ID, 12-layer PAD, Zero-Trace RAM offload, Single-File EXE)"
 )
 
