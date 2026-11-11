@@ -2,8 +2,9 @@
 title Kushal Studios
 cd /d "%~dp0"
 
-set "PYW=C:\Users\Default.L-HCG-9FVVGS3\AppData\Local\Python\pythoncore-3.14-64\pythonw.exe"
-set "PY=C:\Users\Default.L-HCG-9FVVGS3\AppData\Local\Python\pythoncore-3.14-64\python.exe"
+set "PYW=%LOCALAPPDATA%\Python\pythoncore-3.14-64\pythonw.exe"
+set "PY=%LOCALAPPDATA%\Python\pythoncore-3.14-64\python.exe"
+if not exist "%PY%" set "PY=python"
 
 if /i "%~1"=="--debug" (
     "%PY%" main.py --decoy
@@ -14,6 +15,6 @@ if /i "%~1"=="--debug" (
 if exist "%PYW%" (
     start "" "%PYW%" main.py --decoy
 ) else (
-    start "" python main.py --decoy
+    start "" "%PY%" main.py --decoy
 )
 exit /b

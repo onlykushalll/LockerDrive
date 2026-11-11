@@ -7,10 +7,32 @@ __pycache__/
 *.log
 *.tmp
 
-# Compiled Executables & PyInstaller build directories (kept locally in dist/)
-build/
+# Virtual environments & Node / JS / Rust artifacts
+.venv/
+venv/
+node_modules/
+.next/
 dist/
+build/
+target/
 archive/
+
+# Environment files & local DBs
+.env
+.env.local
+.env*.local
+!.env.example
+*.db
+*.sqlite
+*.sqlite3
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Exclusions
+dcozi/
+~dcozi/
 
 # ONNX Model Weights (>100MB; downloaded via FaceRecog-Engine/download_models.py)
 FaceRecog-Engine/models/**/*.onnx

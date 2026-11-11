@@ -1,10 +1,11 @@
 """
 restore_real_vault_state.py -- Clears +h/+s on state files, removes stale test
-anchors, restores Kushal's real PIN ('0104'), and restores real face templates.
+anchors, restores the configured PIN (via --pin or LOCKERDRIVE_RESET_PIN), and restores face templates.
 """
 import os
 import sys
 import glob
+import getpass
 import pickle
 import ctypes
 import subprocess
@@ -65,10 +66,23 @@ def main():
                 pass
     state_binding._clear_cache_for_tests()
 
-    res_pin = pin_auth.force_reset("0104")
-    verify_pin = pin_auth.verify("0104")
-    print(f"[OK] PIN reset to '0104': force_reset={res_pin}, verify('0104')={verify_pin}")
-    assert verify_pin == "OK", f"PIN 0104 failed verification: {verify_pin}"
+    reset_pin = ""
+    if "--pin" in sys.argv:
+        idx = sys.argv.index("--pin")
+        if idx + 1 < len(sys.argv):
+            reset_pin = sys.argv[idx + 1].strip()
+    if not reset_pin:
+        reset_pin = os.environ.get("LOCKERDRIVE_RESET_PIN", "").strip()
+    if not reset_pin:
+        reset_pin = getpass.getpass("Enter vault reset PIN (4-12 digits): ").strip()
+    if not reset_pin.isdigit() or not (4 <= len(reset_pin) <= 12):
+        print("[ERROR] Valid 4-12 digit PIN required via --pin, LOCKERDRIVE_RESET_PIN, or prompt.")
+        sys.exit(1)
+
+    res_pin = pin_auth.force_reset(reset_pin)
+    verify_pin = pin_auth.verify(reset_pin)
+    print(f"[OK] PIN reset complete: force_reset={res_pin}, verify={verify_pin}")
+    assert verify_pin == "OK", f"PIN failed verification: {verify_pin}"
 
     rec_code = recovery_auth.generate()
     print(f"[OK] Fresh Recovery Code bound to vault.secret: {rec_code}")
@@ -95,7 +109,7 @@ def main():
         pass
 
     face_auth._verify_models()
-    print("[SUCCESS] Real PIN ('0104'), Face Templates, and Anchor are 100% restored and verified!")
+    print("[SUCCESS] Configured PIN, Face Templates, and Anchor are 100% restored and verified!")
 
 
 if __name__ == "__main__":

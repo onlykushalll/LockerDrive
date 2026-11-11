@@ -3,7 +3,7 @@ Kushal Studios / LockerDrive v16.0 -- Chameleon Unified Entrypoint
 
 Default behavior (double-clicking 'Kushal Studios.exe' with no arguments):
   -> Requests upfront UAC daemon -> launches Kushal Studios v3.0 (Gamepad Icon)
-  -> Entering '010410' in Studio AI morphs into LockerDrive Vault Mode (Gold Padlock Icon)
+  -> Entering the configured Studio AI trigger morphs into LockerDrive Vault Mode (Gold Padlock Icon)
 """
 import sys
 import os
@@ -134,7 +134,7 @@ def main():
         print("UAC Daemon:", "ACTIVE" if ok else "DECLINED")
         return
 
-    # 4. Vault GUI mode (launched when Studio AI triggers '010410' or via --gui)
+    # 4. Vault GUI mode (launched when Studio AI trigger matches commitment or via --gui)
     if arg in ("--gui", "--vault"):
         _launch_vault_gui(reuse_daemon=reuse_daemon)
         return

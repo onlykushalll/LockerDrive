@@ -1,4 +1,4 @@
-cd "C:\Users\Default.L-HCG-9FVVGS3\OneDrive\Desktop\LockerDrive\FaceRecog-Engine"
+Set-Location (Join-Path $PSScriptRoot "..\FaceRecog-Engine")
 Write-Output "=== Installing FaceRecog-Engine deps ==="
 pip install -r requirements.txt 2>&1 | Select-Object -Last 5
 Write-Output "=== Installing package ==="
