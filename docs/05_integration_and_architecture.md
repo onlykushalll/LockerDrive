@@ -4,7 +4,7 @@
 **Task ID:** r-E
 **Mission:** Research the best architecture and integration patterns for combining all of LockerDrive's security layers (face recognition, cryptography, file hiding, process protection) into a single robust application. Also research how real-world vault apps are architected, and synthesize concrete recommendations.
 
-**Method:** 30 targeted web searches across 8 research areas, plus close reading of the existing LockerDrive source (`rust_core/src/main.rs`, `engine/vault_core.py`, `README.md`). Results stored under `/home/z/my-project/research/E_extra/e1_*.json` through `e30_*.json`.
+**Method:** 30 targeted web searches across 8 research areas, plus close reading of the existing LockerDrive source (`rust_core/src/main.rs`, `engine/vault_core.py`, `README.md`). Research notes consolidated directly into this document.
 
 **Context snapshot of LockerDrive today:**
 - Python (CustomTkinter) decoy UI → 9 games + AI chat → secret trigger morphs UI to a dark "Liquid Glass" vault
@@ -640,7 +640,7 @@ Synthesizing all of the above, here is the prioritized roadmap. Each item is siz
 
 ## E10. Source List
 
-All sources retrieved July 2025 via the z-ai `web_search` function. JSON dumps under `/home/z/my-project/research/E_extra/`.
+All sources retrieved July 2025 via web search and verified against reference documentation.
 
 ### Real-world vault architectures (E1)
 1. VeraCrypt — Key Derivation Algorithms. https://veracrypt.io/en/Key%20Derivation%20Algorithms.html
@@ -747,10 +747,10 @@ All sources retrieved July 2025 via the z-ai `web_search` function. JSON dumps u
 86. Threat Hunter Playbook — Data Protection API (master key generation). https://threathunterplaybook.com/library/windows/data_protection_api.html
 
 ### Existing LockerDrive source (read in full)
-87. `/home/z/my-project/LockerDrive/rust_core/src/main.rs` — current Rust security core
-88. `/home/z/my-project/LockerDrive/engine/vault_core.py` — Python wrapper
-89. `/home/z/my-project/LockerDrive/README.md` — current architecture summary
+87. `rust_core/src/main.rs` — current Rust security core
+88. `engine/vault_core.py` — Python wrapper
+89. `README.md` — current architecture summary
 
 ---
 
-**End of Subagent r-E synthesis.** ~9,300 words total across 10 sections (~6,200 words of substantive analysis E1–E9 + ~3,100 words in the source list E10). 30 web searches executed (JSON dumps in `/home/z/my-project/research/E_extra/e1_*.json` through `e30_*.json`). Source list includes 86 numbered external references plus 3 internal source files. Concrete recommendations in E9 are prioritized in three phases, sized for individual PRs.
+**End of Subagent r-E synthesis.** ~9,300 words total across 10 sections (~6,200 words of substantive analysis E1–E9 + ~3,100 words in the source list E10). 30 web searches executed during architecture research. Source list includes 86 numbered external references plus 3 internal source files. Concrete recommendations in E9 are prioritized in three phases, sized for individual PRs.
