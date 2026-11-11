@@ -26,6 +26,23 @@ _ARCFACE_112_DST = np.array(
 )
 
 
+def _bbox_iou(box_a: Any, box_b: Any) -> float:
+    """Compute Intersection-over-Union between two [x1, y1, x2, y2] bounding boxes."""
+    try:
+        ax1, ay1, ax2, ay2 = [float(v) for v in box_a[:4]]
+        bx1, by1, bx2, by2 = [float(v) for v in box_b[:4]]
+        ix1, iy1 = max(ax1, bx1), max(ay1, by1)
+        ix2, iy2 = min(ax2, bx2), min(ay2, by2)
+        iw, ih = max(0.0, ix2 - ix1), max(0.0, iy2 - iy1)
+        inter = iw * ih
+        area_a = max(0.0, ax2 - ax1) * max(0.0, ay2 - ay1)
+        area_b = max(0.0, bx2 - bx1) * max(0.0, by2 - by1)
+        union = area_a + area_b - inter
+        return float(inter / union) if union > 1e-6 else 0.0
+    except Exception:
+        return 0.0
+
+
 def _umeyama_similarity_2d(src: np.ndarray, dst: np.ndarray) -> np.ndarray:
     """Exact 2D Umeyama similarity transform (rotation + uniform scale + translation)."""
     num = src.shape[0]
@@ -123,9 +140,19 @@ class FaceRecognizer:
         if self._app is not None:
             try:
                 faces = self._app.get(frame)
-                for f in faces:
-                    if getattr(f, "normed_embedding", None) is not None:
-                        return self._normalize(f.normed_embedding)
+                candidates = [
+                    f for f in faces
+                    if getattr(f, "normed_embedding", None) is not None
+                ]
+                if candidates:
+                    target_bbox = getattr(face, "bbox", None)
+                    if target_bbox is not None and len(candidates) > 1:
+                        best_f = max(
+                            candidates,
+                            key=lambda f: _bbox_iou(target_bbox, getattr(f, "bbox", target_bbox)),
+                        )
+                        return self._normalize(best_f.normed_embedding)
+                    return self._normalize(candidates[0].normed_embedding)
             except Exception:
                 pass
 

@@ -102,6 +102,8 @@ def weiszfeld_spherical_median(
 
     # Initialize with weighted Euclidean mean projected onto S^(D-1)
     est = l2_normalize(np.sum(mat * w_arr[:, None], axis=0))
+    if float(np.linalg.norm(est)) <= 1e-6:
+        est = unit_vecs[0].copy()
 
     for _ in range(max_iter):
         # Geodesic chord distances ||x_i - est||_2
@@ -111,11 +113,15 @@ def weiszfeld_spherical_median(
         inv_dists = w_arr / np.maximum(dists, 1e-4)
         inv_dists /= np.sum(inv_dists)
         next_est = l2_normalize(np.sum(mat * inv_dists[:, None], axis=0))
+        if float(np.linalg.norm(next_est)) <= 1e-6:
+            break
         if float(np.linalg.norm(next_est - est)) < tol:
             est = next_est
             break
         est = next_est
 
+    if float(np.linalg.norm(est)) <= 1e-6:
+        return unit_vecs[0].copy()
     return est
 
 
