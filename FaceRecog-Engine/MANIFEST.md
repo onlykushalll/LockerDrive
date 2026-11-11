@@ -7,7 +7,7 @@
 
 ## What's in this folder
 
-This is the standalone **FaceRecog-Engine** containing the core face detection, tracking, liveness checks, and recognition algorithms extracted from MajestyGuard. All named pipes, active Windows process controllers, and Windows-specific DPAPI encryption models have been replaced with clean, platform-agnostic implementations.
+This is the standalone **FaceRecog-Engine** containing the core face detection, tracking, liveness checks, and recognition algorithms. All named pipes, active Windows process controllers, and Windows-specific DPAPI encryption models have been decoupled into clean, platform-agnostic implementations.
 
 ---
 
@@ -16,7 +16,7 @@ This is the standalone **FaceRecog-Engine** containing the core face detection, 
 ```
 ~FaceRecog-Engine~/
 ├── README.md                      # Overview, setup, and example guides
-├── LICENSE                        # MIT License
+├── LICENSE                        # Proprietary Commercial Evaluation License
 ├── MANIFEST.md                    # Complete layout manifest
 ├── requirements.txt               # Pin-pointed, clean Python dependencies
 ├── download_models.py             # Automates downloading MiDaS, best_model, etc.

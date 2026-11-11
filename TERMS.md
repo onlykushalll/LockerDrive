@@ -33,6 +33,6 @@ IN NO EVENT SHALL THE DEVELOPERS BE LIABLE FOR ANY LOSS OF DATA, CORRUPTION OF V
 
 ---
 
-## 5. License
+## 5. License & Commercial Rights
 
-LockerDrive is open-source software licensed under the MIT License.
+LockerDrive is proprietary software Copyright (c) 2026 Kushal (`@onlykushalll`). All rights reserved. This repository is provided exclusively for commercial licensing, technical due diligence, and evaluation under [`LICENSE.md`](LICENSE.md) (Contact: `creatormanager27@gmail.com`). Third-party Python, PyTorch, ONNX Runtime, and Windows system dependencies remain governed by their respective upstream open-source licenses.

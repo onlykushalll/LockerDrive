@@ -62,7 +62,7 @@
 ## 6. How to re-run everything yourself
 
 ```powershell
-cd C:\Users\Default.L-HCG-9FVVGS3\OneDrive\Desktop\LockerDrive
+cd <lockerdrive-repo-root>
 python setup\test_hardening.py       # 61 checks, ~10s, temp dirs only
 python setup\test_parallel_load.py   # model load benchmark, ~1-2 min, no camera
 python setup\_smoke_api.py           # Api boot smoke (safe calls only)

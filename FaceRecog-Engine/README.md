@@ -1,7 +1,7 @@
 # 🛡️ FaceRecog-Engine v2.0
 
 > **Standalone 12-Layer Passive Anti-Spoofing & 3D Multi-Angle Biometric Authentication SDK**
-> Engineered as a zero-cloud, drop-in biometric security plugin for desktop and edge applications (LockerDrive, MajestyGuard, TAALA-2KEN, and custom Python apps). Runs 100% offline on Python 3.10–3.14+.
+> Engineered as a zero-cloud, drop-in biometric security SDK for desktop and edge applications (LockerDrive, TAALA-2KEN, and custom Python apps). Runs 100% offline on Python 3.10–3.14+.
 
 [![Biometrics: 9-Angle 360° TrueDepth](https://img.shields.io/badge/Enrollment-9--Angle%20360%C2%B0%20Burst-success.svg)](#3d-multi-angle-enrollment--master-centroid-sdk)
 [![Liveness: 12-Layer Passive PAD](https://img.shields.io/badge/Anti--Spoofing-12--Layer%20Passive%20PAD-blue.svg)](#the-12-layer-passive-anti-spoofing-stack)

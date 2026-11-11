@@ -36,7 +36,6 @@ LockerDrive creates and manages:
 
 ## 4. Contact
 
-For inquiries regarding LockerDrive's privacy guarantees, please open an issue on our GitHub repository:
-the project repository
+For inquiries regarding LockerDrive's privacy guarantees or commercial IP evaluation, contact `creatormanager27@gmail.com`.
 
 

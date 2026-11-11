@@ -56,7 +56,7 @@
 
 ### Delete .auth_hash to Reset PIN
 **Severity: CRITICAL**
-- **Attack:** Attacker deletes `.auth_hash` → vault_core re-initializes with default PIN "0104"
+- **Attack:** Attacker deletes `.auth_hash` → vault_core re-initializes with default fallback PIN (`<default-pin>`)
 - **Current mitigation:** Hash file is hidden with attrib +h +s
 - **Recommended mitigation:**
   - Store hash in Windows Registry (HKCU\Software\LockerDrive\AuthHash)
@@ -140,7 +140,7 @@
 
 ### PyAutoGUI Automation
 **Severity: MEDIUM**
-- **Attack:** Use PyAutoGUI to automate typing "0104" into the PIN field
+- **Attack:** Use PyAutoGUI to automate typing guesses into the PIN field
 - **Current mitigation:** Anti-brute-force (3 attempts → 60s lockout)
 - **Assessment:** The rate limiter prevents automated brute-force. But 3 attempts per 60s = 120 PINs per hour. A 4-digit PIN has 10,000 combinations → 83 hours to brute-force.
 - **Recommended mitigation:** Add exponential backoff (see C8). Also: detect rapid input (if 3 PINs entered in <5 seconds, lock for 5 minutes).

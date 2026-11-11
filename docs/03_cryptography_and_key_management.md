@@ -62,7 +62,7 @@ key.zeroize(); // Securely wipes the key
 Encapsulates secrets so they can't be accidentally printed or logged:
 ```rust
 use secrecy::SecretString;
-let pin = SecretString::new("0104".to_string());
+let pin = SecretString::new("123456".to_string());
 // pin.expose_secret() required to access the value
 ```
 
@@ -137,7 +137,7 @@ The C/C++ compiler can optimize away `memset(buf, 0, len)` if it detects the buf
 
 ## C8. PIN/Password Security Analysis
 
-### Entropy of "0104"
+### Entropy of a 4-Digit PIN
 A 4-digit PIN has only **13.3 bits of entropy** (10^4 = 10,000 possibilities). At 3 attempts per 60 seconds:
 - Brute-force time: 10,000 / 3 × 60s = **55.6 hours** (without lockout bypass)
 - With lockout bypass (deleting .vault_state): 10,000 attempts × ~100ms = **17 minutes**

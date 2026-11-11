@@ -8,7 +8,7 @@
 
 **Context snapshot of LockerDrive today:**
 - Python (CustomTkinter) decoy UI → 9 games + AI chat → secret trigger morphs UI to a dark "Liquid Glass" vault
-- Auth: face recognition (FaceRecog-Engine: RetinaFace + AdaFace + 12-layer anti-spoofing) OR PIN `0104`
+- Auth: face recognition (FaceRecog-Engine: RetinaFace + AdaFace + 12-layer anti-spoofing) OR configured PIN
 - Rust binary `vault_core.exe` (compiled, called via subprocess `subprocess.run([_RUST_BINARY, args...], input=pin)`)
 - Crypto: PBKDF2-SHA256 100k iter, 16-byte salt → AES-256-GCM (12-byte nonce, random per encryption)
 - Anti-brute-force: 3 failed PINs → 60s lockout, persisted to disk as XOR-obfuscated file (key `"KSLD"`)
@@ -342,7 +342,7 @@ This is a real concern: if an attacker steals the audit log, they can learn "the
 
 ### The current model: PIN OR Face
 
-LockerDrive today accepts *either* a 4-digit PIN (`0104`) *or* a face match. This is **1-factor** authentication with two alternative paths — not 2FA. An attacker who guesses the PIN (10,000 possibilities, 3 attempts before lockout = 0.03% chance per session) gets in without ever needing the user's face. An attacker who has a photo of the user's face gets in without the PIN.
+LockerDrive today accepts *either* a short numeric PIN *or* a face match. This is **1-factor** authentication with two alternative paths — not 2FA. An attacker who guesses the PIN (10,000 possibilities, 3 attempts before lockout = 0.03% chance per session) gets in without ever needing the user's face. An attacker who has a photo of the user's face gets in without the PIN.
 
 For a vault that contains sensitive personal data, this is too weak.
 
